@@ -11,6 +11,7 @@ import FAQSection from './components/FAQSection';
 import FooterCtaSection from './components/FooterCtaSection';
 import Footer from './components/Footer';
 import FloatingLoginButton from './components/FloatingLoginButton';
+import FloatingThemeToggle from './components/FloatingThemeToggle';
 
 export default function Home() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -58,7 +59,7 @@ export default function Home() {
       />
       <FooterCtaSection darkMode={darkMode} />
       <Footer darkMode={darkMode} />
-      <FloatingLoginButton
+      <FloatingThemeToggle
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
