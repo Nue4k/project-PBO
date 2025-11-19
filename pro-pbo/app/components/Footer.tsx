@@ -3,7 +3,7 @@ import { SectionProps } from '../interfaces';
 
 const Footer = ({ darkMode }: SectionProps) => {
   const categories = ['Platform', 'Perusahaan', 'Sumber', 'Hukum'];
-  const items = ['Fitur', 'Harga', 'Pembaruan', 'Karir', 'Blog', 'Dokumentasi', 'Syarat', 'Privasi'];
+  const items = ['Fitur', 'Pembaruan', 'Karir', 'Blog', 'Dokumentasi', 'Syarat', 'Privasi'];
 
   return (
     <footer className={`text-white py-16 ${darkMode ? 'bg-gray-900' : 'bg-[#0f0f0f]'}`}>
