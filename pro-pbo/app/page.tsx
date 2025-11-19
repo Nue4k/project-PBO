@@ -46,6 +46,7 @@ export default function Home() {
       <HeaderSection
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
+        showThemeToggle={false}
       />
       <HeroSection darkMode={darkMode} />
       <FeaturesSection darkMode={darkMode} />

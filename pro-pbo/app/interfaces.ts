@@ -28,3 +28,9 @@ export interface ToggleDarkModeProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
 }
+
+export interface HeaderSectionProps {
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+  showThemeToggle?: boolean; // Optional prop to show/hide theme toggle
+}

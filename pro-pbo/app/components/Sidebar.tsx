@@ -20,9 +20,9 @@ const Sidebar = ({ darkMode }: { darkMode: boolean }) => {
 
   return (
     <aside className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r z-40`}>
-      <div className="p-4">
+      <div className="p-4 pt-12">
         <div className={`text-xl font-bold mb-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>InternBridge</div>
-        
+
         <nav>
           <ul className="space-y-2">
             {menuItems.map((item) => (

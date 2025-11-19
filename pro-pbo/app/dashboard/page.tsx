@@ -74,7 +74,7 @@ const DashboardPage = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 backdrop-blur-sm z-50 border-b ${darkMode ? 'bg-gray-900/90 border-gray-700' : 'bg-white/90 border-[#e5e7eb]'}`}>
+      <header className={`fixed top-0 left-0 right-0 backdrop-blur-sm z-50 border-b ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-[#e5e7eb]'}`}>
         <div className="max-w-[1200px] mx-auto px-[40px] py-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -140,7 +140,7 @@ const DashboardPage = () => {
         )}
 
         {/* Main Content */}
-        <main className={`flex-1 ${sidebarOpen ? 'md:ml-64' : ''} p-6 pt-24 md:pt-6`}>
+        <main className={`flex-1 ${sidebarOpen ? 'md:ml-64' : ''} p-6 pt-12`}>
           <div className="max-w-[1200px] mx-auto">
             <h1 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Selamat Datang di Dashboard Perusahaan</h1>
             
@@ -189,9 +189,9 @@ const DashboardPage = () => {
               <div className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tindakan Cepat</h2>
                 <div className="space-y-3">
-                  <button className={`w-full text-left px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>
+                  <a href="/dashboard/create-internship" className={`block w-full text-left px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>
                     Buat Program Magang Baru
-                  </button>
+                  </a>
                   <button className={`w-full text-left px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>
                     Review Lamaran
                   </button>

@@ -31,8 +31,8 @@ const HowItWorksSection = ({ darkMode }: SectionProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {studentSteps.map((item, index) => (
               <div key={index} className="text-center">
-                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 ${darkMode ? 'bg-gray-700' : 'bg-[#f5f5f5]'}`}>
-                  <span className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-[#0f0f0f]'}`}>{item.step}</span>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 bg-[#f59e0b]">
+                  <span className="text-lg sm:text-xl font-bold text-white">{item.step}</span>
                 </div>
                 <h4 className={`text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-[#0f0f0f]'}`}>{item.title}</h4>
                 <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-300' : 'text-[#737373]'}`}>{item.desc}</p>
@@ -46,8 +46,8 @@ const HowItWorksSection = ({ darkMode }: SectionProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {companySteps.map((item, index) => (
               <div key={index} className="text-center">
-                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 ${darkMode ? 'bg-gray-700' : 'bg-[#f5f5f5]'}`}>
-                  <span className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-[#0f0f0f]'}`}>{item.step}</span>
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 bg-[#f59e0b]">
+                  <span className="text-lg sm:text-xl font-bold text-white">{item.step}</span>
                 </div>
                 <h4 className={`text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-[#0f0f0f]'}`}>{item.title}</h4>
                 <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-300' : 'text-[#737373]'}`}>{item.desc}</p>
