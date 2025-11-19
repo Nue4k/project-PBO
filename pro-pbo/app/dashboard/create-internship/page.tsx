@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 type FormData = {
   title: string;
@@ -20,6 +21,7 @@ type FormData = {
 };
 
 const CreateInternshipPage = () => {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -531,9 +533,10 @@ const CreateInternshipPage = () => {
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
+                    onClick={() => router.push('/dashboard')}
                     className={`px-6 py-3 rounded-lg font-medium ${
-                      darkMode 
-                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                      darkMode
+                        ? 'bg-gray-700 text-white hover:bg-gray-600'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
