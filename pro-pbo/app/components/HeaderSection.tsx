@@ -75,7 +75,8 @@ const HeaderSection = ({ darkMode, toggleDarkMode }: { darkMode: boolean } & Tog
                     className={`block px-4 py-2 text-sm ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      // Handle company login
+                      // Navigate to company dashboard
+                      window.location.href = '/dashboard';
                       setShowLoginDropdown(false);
                     }}
                   >
@@ -181,7 +182,8 @@ const HeaderSection = ({ darkMode, toggleDarkMode }: { darkMode: boolean } & Tog
                     className={`block px-4 py-2 text-sm ${darkMode ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      // Handle company login
+                      // Navigate to company dashboard
+                      window.location.href = '/dashboard';
                       setShowLoginDropdown(false);
                     }}
                   >
