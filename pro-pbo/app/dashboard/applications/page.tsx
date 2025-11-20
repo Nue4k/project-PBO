@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/Sidebar';
 
 type ApplicationStatus = 'Applied' | 'Reviewed' | 'Interview' | 'Accepted' | 'Rejected';
@@ -21,6 +22,7 @@ type Application = {
   requirements: string[];
   statusDate: string;
   notes?: string;
+  studentBio?: string; // Added for student bio
 };
 
 const CompanyApplicationsPage = () => {
@@ -29,6 +31,8 @@ const CompanyApplicationsPage = () => {
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [applications, setApplications] = useState<Application[]>([]);
+  const [showApplicantProfile, setShowApplicantProfile] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState<Application | null>(null);
 
   useEffect(() => {
     // Check system preference for dark mode
@@ -207,6 +211,11 @@ const CompanyApplicationsPage = () => {
       default:
         return 'Action';
     }
+  };
+
+  const handleViewProfile = (applicant: Application) => {
+    setSelectedApplicant(applicant);
+    setShowApplicantProfile(true);
   };
 
   // Function to handle status change
@@ -475,7 +484,10 @@ const CompanyApplicationsPage = () => {
                           >
                             {getStatusAction(app.status)}
                           </button>
-                          <button className={`px-4 py-2 rounded-lg text-sm ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <button
+                            onClick={() => handleViewProfile(app)}
+                            className={`px-4 py-2 rounded-lg text-sm ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                          >
                             Profil
                           </button>
                         </div>
@@ -498,6 +510,83 @@ const CompanyApplicationsPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Applicant Profile Popup */}
+            {showApplicantProfile && selectedApplicant && (
+              <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className={`rounded-xl p-6 shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Profil Pelamar</h2>
+                    <button
+                      onClick={() => setShowApplicantProfile(false)}
+                      className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                    >
+                      <svg className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="md:col-span-1">
+                      <div className={`rounded-lg p-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <div className="flex flex-col items-center">
+                          <div className={`w-20 h-20 rounded-full ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} flex items-center justify-center mb-3`}>
+                            <span className={`text-2xl font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {selectedApplicant.studentName.charAt(0)}
+                            </span>
+                          </div>
+                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedApplicant.studentName}</h3>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedApplicant.studentMajor}</p>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedApplicant.studentUniversity}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <div className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Deskripsi</h4>
+                        <p>{selectedApplicant.studentBio || 'Tidak ada deskripsi tersedia.'}</p>
+                      </div>
+
+                      <div className="mb-4">
+                        <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplicant.studentSkills.map((skill, index) => (
+                            <span
+                              key={index}
+                              className={`px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email</h4>
+                          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedApplicant.studentEmail}</p>
+                        </div>
+                        <div>
+                          <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Posisi Dilamar</h4>
+                          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedApplicant.position}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setShowApplicantProfile(false)}
+                      className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
