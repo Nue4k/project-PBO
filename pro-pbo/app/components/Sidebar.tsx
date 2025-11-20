@@ -24,10 +24,8 @@ const Sidebar = ({ darkMode }: { darkMode: boolean }) => {
   ] : [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', href: '/dashboard' },
     { id: 'create-internship', label: 'Buat Magang', icon: '💼', href: '/dashboard/create-internship' },
-    { id: 'students', label: 'Mahasiswa', icon: '👥', href: '/dashboard/students' },
     { id: 'applications', label: 'Lamaran', icon: '📋', href: '/dashboard/applications' },
     { id: 'manage-company', label: 'Profil Perusahaan', icon: '🏢', href: '/dashboard/manage-company-profile' },
-    { id: 'settings', label: 'Pengaturan', icon: '⚙️', href: '/dashboard/settings' },
   ];
 
   return (

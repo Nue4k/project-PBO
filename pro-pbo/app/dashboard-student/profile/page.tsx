@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { StudentProfile } from '../../interfaces';
+import { universities, majors, locations } from '../../mockData';
 
 type FormErrors = {
   name?: string;
@@ -353,14 +354,18 @@ const ManageStudentProfilePage = () => {
                     </label>
                     {isEditing ? (
                       <>
-                        <input
-                          type="text"
+                        <select
                           id="university"
                           name="university"
                           value={profile.university}
                           onChange={handleInputChange}
                           className={`w-full px-3 py-2 rounded-lg border ${errors.university ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        />
+                        >
+                          <option value="">Pilih Universitas</option>
+                          {universities.map((univ, index) => (
+                            <option key={index} value={univ}>{univ}</option>
+                          ))}
+                        </select>
                         {errors.university && <p className="mt-1 text-sm text-red-500">{errors.university}</p>}
                       </>
                     ) : (
@@ -377,14 +382,18 @@ const ManageStudentProfilePage = () => {
                     </label>
                     {isEditing ? (
                       <>
-                        <input
-                          type="text"
+                        <select
                           id="major"
                           name="major"
                           value={profile.major}
                           onChange={handleInputChange}
                           className={`w-full px-3 py-2 rounded-lg border ${errors.major ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        />
+                        >
+                          <option value="">Pilih Jurusan</option>
+                          {majors.map((major, index) => (
+                            <option key={index} value={major}>{major}</option>
+                          ))}
+                        </select>
                         {errors.major && <p className="mt-1 text-sm text-red-500">{errors.major}</p>}
                       </>
                     ) : (
@@ -401,14 +410,18 @@ const ManageStudentProfilePage = () => {
                     </label>
                     {isEditing ? (
                       <>
-                        <input
-                          type="text"
+                        <select
                           id="location"
                           name="location"
                           value={profile.location}
                           onChange={handleInputChange}
                           className={`w-full px-3 py-2 rounded-lg border ${errors.location ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        />
+                        >
+                          <option value="">Pilih Lokasi</option>
+                          {locations.map((loc, index) => (
+                            <option key={index} value={loc}>{loc}</option>
+                          ))}
+                        </select>
                         {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
                       </>
                     ) : (

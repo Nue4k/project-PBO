@@ -81,6 +81,42 @@ const StudentDashboardPage = () => {
     }
   };
 
+  // Function to get student profile data
+  const getStudentProfile = async () => {
+    // In a real application, this would fetch from an API
+    return {
+      id: 'student-1',
+      name: 'Budi Santoso',
+      email: 'budi.santoso@example.com',
+      university: 'Universitas Indonesia',
+      major: 'Teknik Informatika',
+      skills: ['JavaScript', 'React', 'Node.js', 'Python', 'UI/UX Design'],
+      location: 'Jakarta',
+      interests: ['Web Development', 'Mobile Apps', 'AI/ML'],
+      experience: ['Frontend Developer Intern', 'UI Design Freelancer'],
+      education: ['S1 Teknik Informatika, UI', 'SMA Jurusan IPA'],
+    };
+  };
+
+  // Function to handle quick apply button click
+  const handleQuickApplyClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const profile = await getStudentProfile();
+
+    // Build query parameters from profile data
+    const queryParams = new URLSearchParams({
+      prefiltered: 'true',
+      major: profile.major,
+      location: profile.location,
+      university: profile.university,
+      skills: profile.skills.join(','),
+      interests: profile.interests.join(',')
+    });
+
+    // Navigate to find-internships page with pre-filled filters
+    window.location.href = `/dashboard-student/find-internships?${queryParams.toString()}`;
+  };
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
@@ -230,7 +266,11 @@ const StudentDashboardPage = () => {
               <div className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tindakan Cepat</h2>
                 <div className="space-y-3">
-                  <a href="/dashboard-student/find-internships?prefiltered=true" className={`block w-full text-left px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>
+                  <a
+                    href="#"
+                    onClick={handleQuickApplyClick}
+                    className={`block w-full text-left px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors cursor-pointer`}
+                  >
                     Ajukan Lamaran Magang
                   </a>
                 </div>

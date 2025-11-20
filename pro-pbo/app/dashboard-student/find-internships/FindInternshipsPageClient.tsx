@@ -32,6 +32,7 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
   const [skillFilter, setSkillFilter] = useState('');
   const [majorFilter, setMajorFilter] = useState('');
   const [specificationFilter, setSpecificationFilter] = useState('');
+  const [universityFilter, setUniversityFilter] = useState('');
 
   useEffect(() => {
     // Check system preference for dark mode
@@ -168,16 +169,18 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
     const initializeFilters = async () => {
       if (searchParams?.prefiltered === 'true') {
         const profile = await getStudentProfile();
-        setLocationFilter(profile.location); // Student's location
-        setSkillFilter(profile.skills.join(',')); // Student's skills
-        setMajorFilter(profile.major); // Student's major
-        setSpecificationFilter(profile.interests.join(',')); // Student's interests
+        setLocationFilter(searchParams?.location as string || profile.location); // Student's location
+        setSkillFilter(searchParams?.skills as string || profile.skills.join(',')); // Student's skills
+        setMajorFilter(searchParams?.major as string || profile.major); // Student's major
+        setSpecificationFilter(searchParams?.interests as string || profile.interests.join(',')); // Student's interests
+        setUniversityFilter(searchParams?.university as string || profile.university); // Student's university
       } else {
         // Clear filters if not prefiltering
         setLocationFilter('');
         setSkillFilter('');
         setMajorFilter('');
         setSpecificationFilter('');
+        setUniversityFilter('');
       }
     };
 
@@ -231,7 +234,19 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
       );
     }
 
-    return matchesSearch && matchesLocation && matchesType && matchesSkills && matchesSpecification && matchesMajor;
+    // Additional filters based on university (handle comma-separated values)
+    let matchesUniversity = universityFilter === '';
+    if (universityFilter !== '') {
+      const universityList = universityFilter.split(',').map(u => u.trim().toLowerCase());
+      matchesUniversity = universityList.some(university =>
+        university.toLowerCase().includes(internship.title.toLowerCase()) ||
+        internship.title.toLowerCase().includes(university.toLowerCase()) ||
+        university.toLowerCase().includes(internship.description.toLowerCase()) ||
+        internship.description.toLowerCase().includes(university.toLowerCase())
+      );
+    }
+
+    return matchesSearch && matchesLocation && matchesType && matchesSkills && matchesSpecification && matchesMajor && matchesUniversity;
   });
 
   return (
@@ -366,7 +381,7 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
                     className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="specification" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Spesifikasi</label>
                   <input
@@ -378,7 +393,7 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
                     className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="major" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Jurusan</label>
                   <input
@@ -387,6 +402,18 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
                     placeholder="Teknik Informatika, Desain Grafis, dll"
                     value={majorFilter}
                     onChange={(e) => setMajorFilter(e.target.value)}
+                    className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="university" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Universitas</label>
+                  <input
+                    type="text"
+                    id="university"
+                    placeholder="Universitas Indonesia, ITB, dll"
+                    value={universityFilter}
+                    onChange={(e) => setUniversityFilter(e.target.value)}
                     className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
