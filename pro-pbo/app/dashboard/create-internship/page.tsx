@@ -200,8 +200,8 @@ const CreateInternshipPage = () => {
                       onChange={handleInputChange}
                       required
                       className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                       }`}
                       placeholder="Contoh: Program Magang Pemasaran Digital"
@@ -219,8 +219,8 @@ const CreateInternshipPage = () => {
                       onChange={handleInputChange}
                       required
                       className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                       }`}
                     >
@@ -241,8 +241,8 @@ const CreateInternshipPage = () => {
                       value={formData.location}
                       onChange={handleInputChange}
                       className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                       }`}
                       placeholder="Contoh: Jakarta Selatan"
@@ -293,26 +293,38 @@ const CreateInternshipPage = () => {
                     <label className={`block mb-2 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                       Status Gaji
                     </label>
-                    <div className="flex items-center">
-                      <label className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <div className="flex space-x-4">
+                      <label
+                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
+                          !formData.isPaid
+                            ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
+                            : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="isPaid"
                           checked={!formData.isPaid}
                           onChange={() => handleCheckboxChange('isPaid', false)}
-                          className="mr-2 h-4 w-4 text-[#f59e0b] focus:ring-[#f59e0b]"
+                          className="hidden"
                         />
-                        Unpaid
+                        <span className="mx-auto font-medium">Unpaid</span>
                       </label>
-                      <label className={`flex items-center cursor-pointer ml-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <label
+                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
+                          formData.isPaid
+                            ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
+                            : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="isPaid"
                           checked={formData.isPaid}
                           onChange={() => handleCheckboxChange('isPaid', true)}
-                          className="mr-2 h-4 w-4 text-[#f59e0b] focus:ring-[#f59e0b]"
+                          className="hidden"
                         />
-                        Paid
+                        <span className="mx-auto font-medium">Paid</span>
                       </label>
                     </div>
                   </div>
