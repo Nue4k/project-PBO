@@ -23,6 +23,8 @@ type FormData = {
 const CreateInternshipPage = () => {
   const router = useRouter();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -112,15 +114,6 @@ const CreateInternshipPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Internship data submitted:', {
-      ...formData,
-      requirements: {
-        ...formData.requirements,
-        majors: formData.requirements.majors,
-        skills: formData.requirements.skills,
-      }
-    });
 
     // Basic validation
     if (!formData.duration) {
@@ -133,7 +126,8 @@ const CreateInternshipPage = () => {
       return;
     }
 
-    alert('Program magang berhasil dibuat!');
+    // Show confirmation dialog instead of submitting immediately
+    setShowSubmitConfirmDialog(true);
   };
 
   return (
@@ -597,6 +591,92 @@ const CreateInternshipPage = () => {
               >
                 Ya, Batalkan
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submission Confirmation Dialog */}
+      {showSubmitConfirmDialog && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl p-6 shadow-lg w-full max-w-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Konfirmasi Pembuatan Magang
+            </h3>
+            <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Apakah Anda yakin ingin membuat program magang ini? Pastikan semua informasi telah diisi dengan benar.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirmDialog(false)}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  darkMode
+                    ? 'bg-gray-700 text-white hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // Here you would typically send the data to your backend
+                  console.log('Internship data submitted:', {
+                    ...formData,
+                    requirements: {
+                      ...formData.requirements,
+                      majors: formData.requirements.majors,
+                      skills: formData.requirements.skills,
+                    }
+                  });
+
+                  // Hide the confirmation dialog and show success popup
+                  setShowSubmitConfirmDialog(false);
+                  setShowSuccessPopup(true);
+                }}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors"
+              >
+                Ya, Buat Program Magang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl p-6 shadow-lg w-full max-w-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className={`text-lg font-bold mt-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Berhasil!
+              </h3>
+              <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Program magang berhasil dibuat.
+              </p>
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSuccessPopup(false);
+                    // Redirect to dashboard after success
+                    router.push('/dashboard');
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    darkMode
+                      ? 'bg-[#f59e0b] text-white hover:bg-[#d97706]'
+                      : 'bg-[#f59e0b] text-white hover:bg-[#d97706]'
+                  }`}
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
         </div>
