@@ -128,7 +128,17 @@ export const updateStudentProfile = async (
       throw new Error(`Update profile failed: ${response.status} ${response.statusText}. ${JSON.stringify(errorData)}`);
     }
 
-    return response.json();
+    const responseData = await response.json();
+    console.log('Raw API response for update profile:', responseData);
+
+    // Jika respons berisi profile di dalam object, maka kita perlu mengaksesnya
+    // Format respons dari controller: { message: "...", profile: {...} }
+    if (responseData.profile) {
+      return responseData.profile;
+    }
+
+    // Jika tidak, kembalikan langsung (untuk kasus jika format respons berubah)
+    return responseData;
   } catch (error) {
     console.error('Update profile error:', error);
     throw error;
@@ -150,7 +160,16 @@ export const getStudentProfile = async (token: string): Promise<StudentProfile> 
       throw new Error(`Get profile failed: ${response.status} ${response.statusText}. ${JSON.stringify(errorData)}`);
     }
 
-    return response.json();
+    const responseData = await response.json();
+    console.log('Raw API response for get profile:', responseData);
+
+    // Jika respons berisi profile di dalam object, maka kita perlu mengaksesnya
+    // Misalnya: { profile: {...} } daripada langsung {...}
+    if (responseData.profile) {
+      return responseData.profile;
+    }
+
+    return responseData;
   } catch (error) {
     console.error('Get profile error:', error);
     throw error;

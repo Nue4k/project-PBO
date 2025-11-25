@@ -9,7 +9,12 @@ type MenuItem = {
   href: string;
 };
 
-const Sidebar = ({ darkMode }: { darkMode: boolean }) => {
+type UserProfile = {
+  name: string;
+  email: string;
+};
+
+const Sidebar = ({ darkMode, userProfile }: { darkMode: boolean; userProfile?: UserProfile }) => {
   const pathname = usePathname();
 
   // Determine which menu items to show based on the current path
@@ -32,6 +37,27 @@ const Sidebar = ({ darkMode }: { darkMode: boolean }) => {
     <aside className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r z-40`}>
       <div className="p-4 pt-12">
         <div className={`text-xl font-bold mb-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>InternBridge</div>
+
+        {/* User Profile Section */}
+        {userProfile && (
+          <div className={`p-4 rounded-lg mb-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <div className={`font-semibold truncate max-w-[120px] ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {userProfile.name}
+                </div>
+                <div className={`text-xs truncate max-w-[120px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {userProfile.email}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <nav>
           <ul className="space-y-2">

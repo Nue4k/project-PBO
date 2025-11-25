@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
 import { StudentProfile, UpdateStudentProfileRequest } from '../../interfaces';
-import { updateStudentProfile } from '../../lib/apiService';
+import { updateStudentProfile, getStudentProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
 import { universities, majors, locations } from '../../mockData';
 
@@ -24,6 +24,9 @@ const ManageStudentProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(true);
+
+  // Temporary state untuk form edit, terpisah dari state profil utama
+  const [tempProfile, setTempProfile] = useState<StudentProfile | null>(null);
 
   useEffect(() => {
     // Check system preference for dark mode
@@ -47,15 +50,26 @@ const ManageStudentProfilePage = () => {
   useEffect(() => {
     const loadProfile = async () => {
       console.log('Token value:', token);
+      console.log('Full token (first 20 chars):', token ? token.substring(0, 20) + '...' : null);
+
       if (token) {
         try {
+          console.log('Attempting to fetch profile...');
           const profileData = await getStudentProfile(token);
           console.log('Profile data fetched:', profileData);
           setProfile(profileData);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error fetching profile:', error);
+
+          // Tampilkan informasi error yang lebih spesifik
+          let errorMessage = 'Gagal memuat profil. Silakan coba lagi nanti.';
+          if (error.message) {
+            errorMessage += ` (${error.message})`;
+          }
+          console.error('Detailed error message:', errorMessage);
+
           // Tetap set loading ke false meskipun ada error
-          alert('Gagal memuat profil. Silakan coba lagi nanti.');
+          alert(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -90,47 +104,72 @@ const ManageStudentProfilePage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setProfile(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setTempProfile(prev => {
+      if (prev) {
+        return {
+          ...prev,
+          [name]: value
+        };
+      }
+      return prev;
+    });
   };
 
   const [newSkill, setNewSkill] = useState('');
   const [newInterest, setNewInterest] = useState('');
 
   const addSkill = () => {
-    if (newSkill.trim() && !profile.skills.includes(newSkill.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }));
+    if (newSkill.trim() && tempProfile && !tempProfile.skills.includes(newSkill.trim())) {
+      setTempProfile(prev => {
+        if (prev) {
+          return {
+            ...prev,
+            skills: [...prev.skills, newSkill.trim()]
+          };
+        }
+        return prev;
+      });
       setNewSkill('');
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setProfile(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
-    }));
+    setTempProfile(prev => {
+      if (prev) {
+        return {
+          ...prev,
+          skills: prev.skills.filter(skill => skill !== skillToRemove)
+        };
+      }
+      return prev;
+    });
   };
 
   const addInterest = () => {
-    if (newInterest.trim() && !profile.interests.includes(newInterest.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        interests: [...prev.interests, newInterest.trim()]
-      }));
+    if (newInterest.trim() && tempProfile && !tempProfile.interests.includes(newInterest.trim())) {
+      setTempProfile(prev => {
+        if (prev) {
+          return {
+            ...prev,
+            interests: [...prev.interests, newInterest.trim()]
+          };
+        }
+        return prev;
+      });
       setNewInterest('');
     }
   };
 
   const removeInterest = (interestToRemove: string) => {
-    setProfile(prev => ({
-      ...prev,
-      interests: prev.interests.filter(interest => interest !== interestToRemove)
-    }));
+    setTempProfile(prev => {
+      if (prev) {
+        return {
+          ...prev,
+          interests: prev.interests.filter(interest => interest !== interestToRemove)
+        };
+      }
+      return prev;
+    });
   };
 
   const validateForm = (): boolean => {
@@ -173,21 +212,21 @@ const ManageStudentProfilePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm() && profile && token) {
+    if (validateForm() && tempProfile && token) {
       try {
         // Konversi form data ke format yang sesuai untuk API
         const profileData: UpdateStudentProfileRequest = {
-          name: profile.name,
-          email: profile.email,
-          university: profile.university,
-          major: profile.major,
-          location: profile.location,
-          skills: profile.skills,
-          interests: profile.interests,
-          experience: profile.experience,
-          education: profile.education,
-          portfolio: profile.portfolio,
-          avatar: profile.avatar,
+          name: tempProfile.name,
+          email: tempProfile.email,
+          university: tempProfile.university,
+          major: tempProfile.major,
+          location: tempProfile.location,
+          skills: tempProfile.skills,
+          interests: tempProfile.interests,
+          experience: tempProfile.experience,
+          education: tempProfile.education,
+          portfolio: tempProfile.portfolio,
+          avatar: tempProfile.avatar,
         };
 
         // Panggil API untuk update profil
@@ -196,7 +235,7 @@ const ManageStudentProfilePage = () => {
         // Tampilkan pesan sukses
         alert('Profil berhasil diperbarui!');
 
-        // Perbarui state dengan data profil terbaru dari server
+        // Perbarui state profil utama dengan data profil terbaru dari server
         setProfile(updatedProfile);
         setIsEditing(false);
         setErrors({});
@@ -244,9 +283,9 @@ const ManageStudentProfilePage = () => {
               </button>
               <div className="flex items-center space-x-2">
                 <div className={`h-10 w-10 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center`}>
-                  <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-700'}`}>M</span>
+                  <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-700'}`}>{profile?.name ? profile.name.charAt(0).toUpperCase() : 'U'}</span>
                 </div>
-                <span className={`hidden md:block ${darkMode ? 'text-white' : 'text-gray-700'}`}>Budi Santoso</span>
+                <span className={`hidden md:block ${darkMode ? 'text-white' : 'text-gray-700'}`}>{profile?.name || 'User'}</span>
               </div>
             </div>
           </div>
@@ -285,6 +324,8 @@ const ManageStudentProfilePage = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      // Hanya kembali ke mode tampilan, tanpa menyimpan perubahan
+                      // tempProfile akan tetap ada tapi tidak digunakan saat tidak mengedit
                       setIsEditing(false);
                       setErrors({});
                     }}
@@ -296,7 +337,27 @@ const ManageStudentProfilePage = () => {
                 {profile && (
                   <button
                     type="button"
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => {
+                      if (!isEditing && profile) {
+                        // Saat mulai edit, gunakan profil utama sebagai basis tempProfile
+                        setTempProfile({
+                          id: profile.id,
+                          name: profile.name,
+                          email: profile.email,
+                          university: profile.university,
+                          major: profile.major,
+                          skills: [...profile.skills],
+                          location: profile.location,
+                          interests: [...profile.interests],
+                          experience: [...profile.experience],
+                          education: [...profile.education],
+                          resume: profile.resume,
+                          portfolio: profile.portfolio,
+                          avatar: profile.avatar,
+                        });
+                      }
+                      setIsEditing(!isEditing);
+                    }}
                     className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
                   >
                     {isEditing ? 'Lihat Profil' : 'Edit Profil'}
@@ -359,7 +420,7 @@ const ManageStudentProfilePage = () => {
                           type="text"
                           id="name"
                           name="name"
-                          value={profile.name}
+                          value={tempProfile?.name || ''}
                           onChange={handleInputChange}
                           className={`w-full px-3 py-2 rounded-lg border ${errors.name ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
@@ -367,7 +428,7 @@ const ManageStudentProfilePage = () => {
                       </>
                     ) : (
                       <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.name}
+                        {profile?.name}
                       </div>
                     )}
                   </div>
@@ -383,7 +444,7 @@ const ManageStudentProfilePage = () => {
                           type="email"
                           id="email"
                           name="email"
-                          value={profile.email}
+                          value={tempProfile?.email || ''}
                           onChange={handleInputChange}
                           className={`w-full px-3 py-2 rounded-lg border ${errors.email ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
@@ -391,7 +452,7 @@ const ManageStudentProfilePage = () => {
                       </>
                     ) : (
                       <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.email}
+                        {profile?.email}
                       </div>
                     )}
                   </div>

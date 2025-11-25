@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../lib/authContext';
 import Sidebar from '../../components/Sidebar';
 
 type Internship = {
@@ -187,6 +188,31 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
     initializeFilters();
   }, [searchParams]);
 
+  // State for user profile
+  const [userName, setUserName] = useState<string>('User');
+  const [userEmail, setUserEmail] = useState<string>('user@example.com');
+  const [userInitial, setUserInitial] = useState<string>('U');
+
+  const { token } = useAuth();
+
+  // Fetch user profile to get name
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (token) {
+        try {
+          const profile = await getStudentProfile(token);
+          setUserName(profile.name || profile.email.split('@')[0]); // Gunakan nama dari profil, atau username dari email jika tidak ada
+          setUserEmail(profile.email);
+          setUserInitial(profile.name?.charAt(0).toUpperCase() || profile.email.charAt(0).toUpperCase());
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [token]);
+
   // Filter internships based on search and filters
   const filteredInternships = internships.filter(internship => {
     const matchesSearch =
@@ -249,6 +275,8 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
     return matchesSearch && matchesLocation && matchesType && matchesSkills && matchesSpecification && matchesMajor && matchesUniversity;
   });
 
+  const { user } = useAuth();
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
@@ -284,9 +312,13 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
               </button>
               <div className="flex items-center space-x-2">
                 <div className={`h-10 w-10 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center`}>
-                  <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-700'}`}>M</span>
+                  <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+                    {userInitial}
+                  </span>
                 </div>
-                <span className={`hidden md:block ${darkMode ? 'text-white' : 'text-gray-700'}`}>Budi Santoso</span>
+                <span className={`hidden md:block ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+                  {userName}
+                </span>
               </div>
             </div>
           </div>
@@ -297,7 +329,7 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
         {/* Sidebar */}
         {(sidebarOpen || window.innerWidth >= 768) && (
           <div className="hidden md:block">
-            <Sidebar darkMode={darkMode} />
+            <Sidebar darkMode={darkMode} userProfile={{ name: userName, email: userEmail }} />
           </div>
         )}
 
@@ -311,7 +343,7 @@ const FindInternshipsPageClient = ({ searchParams }: FindInternshipsPageClientPr
 
         {sidebarOpen && window.innerWidth < 768 && (
           <div className="fixed top-16 left-0 z-40 w-64 h-[calc(100vh-4rem)] md:hidden">
-            <Sidebar darkMode={darkMode} />
+            <Sidebar darkMode={darkMode} userProfile={{ name: userName, email: userEmail }} />
           </div>
         )}
 
