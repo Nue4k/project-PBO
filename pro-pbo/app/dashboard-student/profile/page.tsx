@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../lib/authContext';
+import { StudentProfile, UpdateStudentProfileRequest } from '../../interfaces';
+import { updateStudentProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
-import { StudentProfile } from '../../interfaces';
 import { universities, majors, locations } from '../../mockData';
 
 type FormErrors = {
@@ -18,23 +20,10 @@ type FormErrors = {
 const ManageStudentProfilePage = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [profile, setProfile] = useState<StudentProfile>({
-    id: 'student-1',
-    name: 'Budi Santoso',
-    email: 'budi.santoso@example.com',
-    university: 'Universitas Indonesia',
-    major: 'Teknik Informatika',
-    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'UI/UX Design'],
-    location: 'Jakarta',
-    interests: ['Web Development', 'Mobile Apps', 'AI/ML'],
-    experience: ['Frontend Developer Intern', 'UI Design Freelancer'],
-    education: ['S1 Teknik Informatika, UI', 'SMA Jurusan IPA'],
-    resume: '',
-    portfolio: 'https://budi-portfolio.com',
-    avatar: '',
-  });
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check system preference for dark mode
@@ -51,6 +40,33 @@ const ManageStudentProfilePage = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  const { token } = useAuth();
+
+  // Load profile data when component mounts
+  useEffect(() => {
+    const loadProfile = async () => {
+      console.log('Token value:', token);
+      if (token) {
+        try {
+          const profileData = await getStudentProfile(token);
+          console.log('Profile data fetched:', profileData);
+          setProfile(profileData);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          // Tetap set loading ke false meskipun ada error
+          alert('Gagal memuat profil. Silakan coba lagi nanti.');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        console.log('No token available');
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [token]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -154,14 +170,40 @@ const ManageStudentProfilePage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      // In a real application, you would send the data to an API
-      console.log('Profile updated:', profile);
-      setIsEditing(false);
-      setErrors({});
+    if (validateForm() && profile && token) {
+      try {
+        // Konversi form data ke format yang sesuai untuk API
+        const profileData: UpdateStudentProfileRequest = {
+          name: profile.name,
+          email: profile.email,
+          university: profile.university,
+          major: profile.major,
+          location: profile.location,
+          skills: profile.skills,
+          interests: profile.interests,
+          experience: profile.experience,
+          education: profile.education,
+          portfolio: profile.portfolio,
+          avatar: profile.avatar,
+        };
+
+        // Panggil API untuk update profil
+        const updatedProfile = await updateStudentProfile(token, profileData);
+
+        // Tampilkan pesan sukses
+        alert('Profil berhasil diperbarui!');
+
+        // Perbarui state dengan data profil terbaru dari server
+        setProfile(updatedProfile);
+        setIsEditing(false);
+        setErrors({});
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Gagal memperbarui profil. Silakan coba lagi.');
+      }
     }
   };
 
@@ -239,7 +281,7 @@ const ManageStudentProfilePage = () => {
             <div className="flex justify-between items-center mb-6">
               <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Kelola Profil Mahasiswa</h1>
               <div className="flex space-x-2">
-                {isEditing && (
+                {profile && isEditing && (
                   <button
                     type="button"
                     onClick={() => {
@@ -251,19 +293,26 @@ const ManageStudentProfilePage = () => {
                     Batal
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-                >
-                  {isEditing ? 'Lihat Profil' : 'Edit Profil'}
-                </button>
+                {profile && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(!isEditing)}
+                    className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                  >
+                    {isEditing ? 'Lihat Profil' : 'Edit Profil'}
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Student Profile Card */}
             <div className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <form onSubmit={handleSubmit}>
+              {loading ? (
+                <div className="text-center py-10">
+                  <p className={`${darkMode ? 'text-white' : 'text-gray-900'}`}>Memuat profil...</p>
+                </div>
+              ) : profile ? (
+                <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Profile Avatar */}
                   <div className="md:col-span-2 flex flex-col items-center">
@@ -672,7 +721,12 @@ const ManageStudentProfilePage = () => {
                     </button>
                   </div>
                 )}
-              </form>
+                </form>
+              ) : (
+                <div className="text-center py-10">
+                  <p className={`${darkMode ? 'text-white' : 'text-gray-900'}`}>Tidak dapat memuat profil.</p>
+                </div>
+              )}
             </div>
           </div>
         </main>

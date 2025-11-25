@@ -61,3 +61,17 @@ export interface StudentProfile {
   portfolio?: string;
   avatar?: string;
 }
+
+export interface UpdateStudentProfileRequest {
+  name?: string;
+  email?: string;
+  university?: string;
+  major?: string;
+  location?: string;
+  skills?: string[];
+  interests?: string[];
+  experience?: string[];
+  education?: string[];
+  portfolio?: string;
+  avatar?: string;
+}
