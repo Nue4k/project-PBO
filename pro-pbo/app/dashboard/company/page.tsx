@@ -52,7 +52,7 @@ const CompanyDashboard = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6">Dashboard Perusahaan</h1>
         <div className="mb-6">
-          <h2 className="text-xl font-semibold">Selamat datang, {user?.company_name || user?.email}!</h2>
+          <h2 className="text-xl font-semibold">Selamat datang, {user?.email?.split('@')[0] || user?.email}!</h2>
         </div>
 
         {/* Company's posted internships section */}

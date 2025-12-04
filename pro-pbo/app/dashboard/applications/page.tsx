@@ -65,7 +65,7 @@ const CompanyApplicationsPage = () => {
   const [showInterviewScheduleModal, setShowInterviewScheduleModal] = useState(false);
   const [localApplicationOverrides, setLocalApplicationOverrides] = useState<Record<string, Partial<Application>>>({});
   const [interviewScheduledApplications, setInterviewScheduledApplications] = useState<Set<string>>(new Set());
-  const [interviewSchedule, setInterviewSchedule] = useState({
+  const [interviewSchedule, setInterviewScheduleState] = useState({
     date: '',
     time: '',
     method: 'online', // 'online' or 'offline'
@@ -75,7 +75,7 @@ const CompanyApplicationsPage = () => {
 
   // Ensure interviewSchedule always has proper default values
   useEffect(() => {
-    setInterviewSchedule(prev => ({
+    setInterviewScheduleState(prev => ({
       ...prev,
       date: prev.date || '',
       time: prev.time || '',
@@ -220,7 +220,7 @@ const CompanyApplicationsPage = () => {
 
           // Apply local overrides to server data
           setApplications(prev => {
-            return serverApplications.map(serverApp => {
+            return serverApplications.map((serverApp: Application) => {
               // Check if there's a local override for this application
               const localOverride = localApplicationOverrides[serverApp.id];
               if (localOverride) {
@@ -328,7 +328,7 @@ const CompanyApplicationsPage = () => {
       // If decision is to proceed to interview, show schedule modal
       if (decision === 'interview') {
         // Reset interview schedule form to default values before opening modal
-        setInterviewSchedule(prev => ({
+        setInterviewScheduleState(prev => ({
           date: prev.date || '',
           time: prev.time || '',
           method: prev.method || 'online',
@@ -372,16 +372,8 @@ const CompanyApplicationsPage = () => {
             app.id === id
               ? {
                   ...app,
-                  status: 'Interview',
+                  status: 'Interview' as ApplicationStatus,
                   statusDate: new Date().toISOString().split('T')[0],
-                  interview_date: result?.interview_date || interviewSchedule.date,
-                  interview_time: result?.interview_time || interviewSchedule.time,
-                  interview_method: result?.interview_method || interviewSchedule.method,
-                  interview_location: result?.interview_location || (interviewSchedule.method === 'offline' ? interviewSchedule.location : null),
-                  interview_notes: result?.interview_notes || interviewSchedule.notes,
-                  attendance_confirmed: app.attendance_confirmed || false,
-                  attendance_confirmed_at: app.attendance_confirmed_at || null,
-                  attendance_confirmation_method: app.attendance_confirmation_method || null,
                 }
               : app
           );
@@ -391,7 +383,7 @@ const CompanyApplicationsPage = () => {
         });
 
         // Reset schedule form and close modal
-        setInterviewSchedule(prev => ({
+        setInterviewScheduleState(prev => ({
           date: prev.date || '',
           time: prev.time || '',
           method: prev.method || 'online',
@@ -413,8 +405,8 @@ const CompanyApplicationsPage = () => {
             interview_location: result?.interview_location || (interviewSchedule.method === 'offline' ? interviewSchedule.location : null),
             interview_notes: result?.interview_notes || interviewSchedule.notes,
             attendance_confirmed: false,
-            attendance_confirmed_at: null,
-            attendance_confirmation_method: null
+            attendance_confirmed_at: undefined,
+            attendance_confirmation_method: undefined
           }
         }));
 
@@ -484,7 +476,7 @@ const CompanyApplicationsPage = () => {
                 }));
 
                 // Apply local overrides to the fresh data
-                const applicationsWithOverrides = freshApplications.map(app => {
+                const applicationsWithOverrides = freshApplications.map((app: Application) => {
                   const localOverride = localApplicationOverrides[app.id];
                   if (localOverride) {
                     return { ...app, ...localOverride };
@@ -617,7 +609,7 @@ const CompanyApplicationsPage = () => {
                 }));
 
                 // Apply local overrides to the fresh data
-                const applicationsWithOverrides = freshApplications.map(app => {
+                const applicationsWithOverrides = freshApplications.map((app: Application) => {
                   const localOverride = localApplicationOverrides[app.id];
                   if (localOverride) {
                     return { ...app, ...localOverride };
@@ -663,7 +655,7 @@ const CompanyApplicationsPage = () => {
   // Function to handle schedule change
   const handleScheduleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setInterviewSchedule(prev => ({
+    setInterviewScheduleState(prev => ({
       ...prev,
       [name]: value || ''  // Ensure value is never undefined
     }));
@@ -823,7 +815,7 @@ const CompanyApplicationsPage = () => {
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                       <div className="flex-1">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
-                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{app.title}</h3>
+                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{app.job_title}</h3>
                           <div className="flex items-center gap-2">
                             <span className={`px-3 py-1 rounded-full text-sm font-medium mt-1 md:mt-0 ${getStatusColor(getDisplayStatus(app.status))}`}>
                               {getDisplayStatus(app.status)}
@@ -853,7 +845,7 @@ const CompanyApplicationsPage = () => {
                                     : `${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border`
                           }`}>
                             <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                              <span className="font-medium">Dilamar:</span> {app.appliedDate} •
+                              <span className="font-medium">Dilamar:</span> {app.applied_date} •
                               <span className="font-medium"> Status:</span> {app.statusDate}
                             </p>
                             {app.attendance_confirmed && (
@@ -869,7 +861,7 @@ const CompanyApplicationsPage = () => {
                         <div className="mb-3">
                           <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian Mahasiswa:</h4>
                           <div className="flex flex-wrap gap-2">
-                            {app.studentSkills.map((skill, index) => (
+                            {app.studentSkills?.map((skill, index) => (
                               <span
                                 key={index}
                                 className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}
@@ -881,7 +873,7 @@ const CompanyApplicationsPage = () => {
                         </div>
 
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {app.requirements.map((req, index) => (
+                          {app.requirements?.map((req, index) => (
                             <span
                               key={index}
                               className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
@@ -898,7 +890,7 @@ const CompanyApplicationsPage = () => {
                           </div>
                           <div>
                             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tanggal Lamar</p>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{app.appliedDate}</p>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{app.applied_date}</p>
                           </div>
                           <div>
                             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Batas Waktu</p>
@@ -1088,7 +1080,7 @@ const CompanyApplicationsPage = () => {
                       <div className="mb-4">
                         <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian</h4>
                         <div className="flex flex-wrap gap-2">
-                          {selectedApplicant.studentSkills.map((skill, index) => (
+                          {selectedApplicant.studentSkills?.map((skill, index) => (
                             <span
                               key={index}
                               className={`px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}
@@ -1231,7 +1223,7 @@ const CompanyApplicationsPage = () => {
                 onClick={() => {
                   setShowInterviewScheduleModal(false);
                   setSelectedApplication(null);
-                  setInterviewSchedule(prev => ({
+                  setInterviewScheduleState(prev => ({
                     date: prev.date || '',
                     time: prev.time || '',
                     method: prev.method || 'online',
@@ -1359,7 +1351,7 @@ const CompanyApplicationsPage = () => {
                           onClick={() => {
                             setShowInterviewScheduleModal(false);
                             setSelectedApplication(null);
-                            setInterviewSchedule(prev => ({
+                            setInterviewScheduleState(prev => ({
                               date: prev.date || '',
                               time: prev.time || '',
                               method: prev.method || 'online',

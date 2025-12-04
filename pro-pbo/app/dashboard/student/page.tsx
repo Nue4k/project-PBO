@@ -13,7 +13,7 @@ const StudentDashboard = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6">Dashboard Mahasiswa</h1>
         <div className="mb-6">
-          <h2 className="text-xl font-semibold">Selamat datang, {user?.full_name || user?.email}!</h2>
+          <h2 className="text-xl font-semibold">Selamat datang, {user?.email?.split('@')[0] || user?.email}!</h2>
           {/* Di sini bisa ditambahkan komponen-komponen khusus student */}
           {/* Misalnya: Daftar Lamaran, Dokumen Saya, Pencarian Lowongan */}
         </div>

@@ -1,5 +1,7 @@
 // app/lib/apiService.ts
 
+import { StudentProfile } from '../interfaces';
+
 // Ambil URL API dari environment variable
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'; // Pastikan ini sesuai
 

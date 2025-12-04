@@ -1,0 +1,36 @@
+# Deployment Steps Summary
+
+## On Your Local Machine:
+1. Update .env for production (APP_DEBUG=false, APP_ENV=production)
+2. Run: composer install --optimize-autoloader --no-dev
+3. Generate key: php artisan key:generate
+4. Test locally: php artisan config:cache
+
+## Upload to Server:
+1. Upload all files (except .git, node_modules, tests/)
+2. Ensure public/ is web-accessible directory
+3. Set permissions: chmod -R 755 storage/ and chmod -R 755 bootstrap/cache/
+
+## On Server After Upload:
+1. Update .env with production database settings
+2. Run database migrations: php artisan migrate --force
+3. Clear caches: php artisan config:clear && php artisan cache:clear
+4. Optional: php artisan config:cache && php artisan route:cache
+
+## Web Server Configuration:
+Point document root to /path/to/laravel/public directory
+
+## Common Server Requirements:
+- PHP >= 8.0
+- BCMath PHP Extension
+- Ctype PHP Extension
+- cURL PHP Extension
+- DOM PHP Extension
+- Fileinfo PHP Extension
+- JSON PHP Extension
+- Mbstring PHP Extension
+- OpenSSL PHP Extension
+- PCRE PHP Extension
+- PDO PHP Extension
+- Tokenizer PHP Extension
+- XML PHP Extension

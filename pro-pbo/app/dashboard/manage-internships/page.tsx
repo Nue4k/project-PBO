@@ -22,6 +22,7 @@ interface Internship {
   is_active: boolean;
   salary?: string;
   isPaid: boolean;
+  isMock?: boolean;
 }
 
 const ManageInternshipsPage = () => {
@@ -154,7 +155,7 @@ const ManageInternshipsPage = () => {
       // Prevent multiple simultaneous requests
       if (token && isMounted && !isFetching) {
         isFetching = true; // Set flag to prevent another fetch
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: NodeJS.Timeout | undefined;
         try {
           console.log('Fetching company internships with token:', token); // Debug log
           setLoading(true);
@@ -181,7 +182,7 @@ const ManageInternshipsPage = () => {
             setInternships([]);
           } else if (isMounted) {
             // Process real data
-            const processedData = data.map(internship => {
+            const processedData = data.map((internship: Internship) => {
               console.log('Processing real internship:', {
                 id: internship.id,
                 title: internship.title,
@@ -256,7 +257,7 @@ const ManageInternshipsPage = () => {
         // Refresh the list
         const data = await getCompanyInternships(token!);
         // Process real data
-        const processedData = data.map(internship => ({
+        const processedData = data.map((internship: Internship) => ({
           ...internship,
           isMock: false as const
         }));
@@ -465,7 +466,7 @@ const ManageInternshipsPage = () => {
       // Refresh the list
       const data = await getCompanyInternships(token);
       // Add isMock flag to real data (false)
-      const realDataWithFlag = data.map(internship => ({
+      const realDataWithFlag = data.map((internship: Internship) => ({
         ...internship,
         isMock: false as const
       }));
@@ -604,7 +605,7 @@ const ManageInternshipsPage = () => {
                         const fetchInternships = async () => {
                           // Don't fetch if loading to avoid multiple requests
                           if (token && !loading) {
-                            let timeoutId: NodeJS.Timeout;
+                            let timeoutId: NodeJS.Timeout | undefined;
                             try {
                               console.log('Refreshing company internships...'); // Debug log
                               setLoading(true);
@@ -623,7 +624,7 @@ const ManageInternshipsPage = () => {
 
                               console.log('Refreshed company internships:', data); // Debug log
                               // Process real data
-                              const processedData = data.map(internship => {
+                              const processedData = data.map((internship: Internship) => {
                                 console.log('Refreshing internship:', {
                                   id: internship.id,
                                   title: internship.title,
@@ -930,7 +931,7 @@ const ManageInternshipsPage = () => {
                 <div>
                   <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Jurusan yang Dicari</h3>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {(selectedInternship.requirements?.majors || []).map((major, index) => (
+                    {(selectedInternship.requirements?.majors || []).map((major: string, index: number) => (
                       <span
                         key={index}
                         className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
@@ -949,7 +950,7 @@ const ManageInternshipsPage = () => {
                 <div>
                   <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keterampilan yang Dicari</h3>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {(selectedInternship.requirements?.skills || []).map((skill, index) => (
+                    {(selectedInternship.requirements?.skills || []).map((skill: string, index: number) => (
                       <span
                         key={index}
                         className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}

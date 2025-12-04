@@ -27,6 +27,7 @@ type Application = {
   attendance_confirmed?: boolean;
   attendance_confirmed_at?: string;
   attendance_confirmation_method?: string;
+  feedback_note?: string;
 };
 
 const MyApplicationsPage = () => {
@@ -349,7 +350,7 @@ const MyApplicationsPage = () => {
                   <div
                     key={app.id}
                     className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'} border-l-4 ${
-                      getDisplayStatus(app.status) === 'Submitted' ? 'border-blue-500' :
+                      getDisplayStatus(app.status) === 'Applied' ? 'border-blue-500' :
                       getDisplayStatus(app.status) === 'Reviewed' ? 'border-yellow-500' :
                       getDisplayStatus(app.status) === 'Interview' ? 'border-purple-500' :
                       getDisplayStatus(app.status) === 'Accepted' ? 'border-green-500' : 'border-red-500'

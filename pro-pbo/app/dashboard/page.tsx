@@ -155,8 +155,9 @@ const DashboardPage = () => {
         });
 
         let totalInternships = 0;
+        let jobsData = null;
         if (jobsResponse.ok) {
-          const jobsData = await jobsResponse.json();
+          jobsData = await jobsResponse.json();
           totalInternships = jobsData.data?.length || 0;
         }
 

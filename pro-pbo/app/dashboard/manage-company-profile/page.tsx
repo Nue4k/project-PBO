@@ -8,9 +8,8 @@ import { getCompanyProfile, updateCompanyProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
 
 type CompanyProfile = {
-  id: string;
+  id?: string;
   name: string;
-  email: string;
   description: string;
   industry: string;
   location: string;
@@ -24,9 +23,8 @@ const ManageCompanyProfilePage = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profile, setProfile] = useState<CompanyProfile>({
-    id: '',
+    id: undefined,
     name: '',
-    email: '',
     description: '',
     industry: '',
     location: '',
@@ -100,7 +98,7 @@ const ManageCompanyProfilePage = () => {
     loadProfile();
   }, [token]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfile(prev => ({
       ...prev,
@@ -156,7 +154,6 @@ const ManageCompanyProfilePage = () => {
             // Update user with company name from profile
             const updatedUser = {
               ...user,
-              email: profile.email,
               // Update company-specific data in user context if needed
             };
 

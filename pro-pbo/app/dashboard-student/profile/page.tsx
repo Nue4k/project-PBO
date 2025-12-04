@@ -421,10 +421,13 @@ const ManageStudentProfilePage = () => {
                               const file = e.target.files[0];
                               const reader = new FileReader();
                               reader.onloadend = () => {
-                                setProfile(prev => ({
-                                  ...prev,
-                                  avatar: reader.result as string
-                                }));
+                                setProfile(prev => {
+                                  if (prev === null) return prev;
+                                  return {
+                                    ...prev,
+                                    avatar: reader.result as string
+                                  };
+                                });
                               };
                               reader.readAsDataURL(file);
                             }
