@@ -36,6 +36,7 @@ export interface HeaderSectionProps {
 }
 
 export interface CompanyProfile {
+  id?: string;
   name: string;
   description: string;
   industry: string;
@@ -74,4 +75,38 @@ export interface UpdateStudentProfileRequest {
   education?: string[];
   portfolio?: string;
   avatar?: string;
+}
+
+export interface UpdateCompanyProfileRequest {
+  name?: string;
+  description?: string;
+  industry?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  logo?: string;
+}
+
+export interface User {
+  id: string; // UUID
+  email: string;
+  role: 'student' | 'company' | 'admin';
+  // tambahkan field lain sesuai kebutuhan
+}
+
+export interface LoginResponse {
+  message: string;
+  user: User;
+  token: string;
+}
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  password_confirmation: string; // untuk validasi di backend
+  role: 'student' | 'company' | 'admin';
+  // tambahkan field lain yang diperlukan saat register, sesuai RegisterRequest
+  full_name?: string; // contoh untuk student
+  company_name?: string; // contoh untuk company
 }

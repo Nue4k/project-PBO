@@ -1,9 +1,9 @@
 // FAQSection.tsx
 import { SectionProps, ToggleFaqProps } from '../interfaces';
-import { DataService } from '../dataService';
+import { ContentService } from '../services/content/DataService';
 
 const FAQSection = ({ darkMode, openFaqIndex, toggleFaq }: SectionProps & ToggleFaqProps) => {
-  const faqs = DataService.getFAQs();
+  const faqs = new ContentService().getFAQs();
 
   return (
     <section id="faqs" className={`py-20 px-5 ${darkMode ? 'bg-gray-800' : ''}`}>

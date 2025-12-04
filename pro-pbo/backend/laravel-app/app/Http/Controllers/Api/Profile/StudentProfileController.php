@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
-use App\Models\StudentProfile;
-use App\Models\User;
+use App\Services\ProfileServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class StudentProfileController extends Controller
 {
+    protected ProfileServiceInterface $profileService;
+
+    public function __construct(ProfileServiceInterface $profileService)
+    {
+        $this->profileService = $profileService;
+    }
+
     /**
      * Get the authenticated user's profile.
      *
@@ -34,45 +40,38 @@ class StudentProfileController extends Controller
             ], 403);
         }
 
-        // Ambil profile student terkait
-        $profile = $user->studentProfile;
+        try {
+            $profile = $this->profileService->getStudentProfile($user);
 
-        // Jika profile belum ada, buat profil kosong
-        if (!$profile) {
-            $profile = $user->studentProfile()->create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'full_name' => $user->email, // Gunakan email sebagai default nama
-                'university' => '',
-                'major' => '',
-                'location' => '',
-                'skills' => json_encode([]),
-                'interests' => json_encode([]),
-                'experience' => json_encode([]),
-                'education' => json_encode([]),
-                'portfolio' => '',
-                'avatar' => '',
-                'resume' => '',
-            ]);
+            if (!$profile) {
+                return response()->json([
+                    'message' => 'Student profile not found.'
+                ], 404);
+            }
+
+            // Format data sesuai dengan frontend
+            $profileData = [
+                'id' => $user->id,
+                'name' => $profile->full_name,
+                'email' => $user->email,
+                'university' => $profile->university ?? '',
+                'major' => $profile->major ?? '',
+                'skills' => json_decode($profile->skills, true) ?? [],
+                'location' => $profile->location ?? '',
+                'interests' => json_decode($profile->interests, true) ?? [],
+                'experience' => json_decode($profile->experience, true) ?? [],
+                'education' => json_decode($profile->education, true) ?? [],
+                'resume' => $profile->resume ?? '',
+                'portfolio' => $profile->portfolio ?? '',
+                'avatar' => $profile->avatar ?? '',
+            ];
+
+            return response()->json($profileData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Format data sesuai dengan frontend
-        $profileData = [
-            'id' => $user->id,
-            'name' => $profile->full_name,
-            'email' => $user->email,
-            'university' => $profile->university ?? '',
-            'major' => $profile->major ?? '',
-            'skills' => json_decode($profile->skills, true) ?? [],
-            'location' => $profile->location ?? '',
-            'interests' => json_decode($profile->interests, true) ?? [],
-            'experience' => json_decode($profile->experience, true) ?? [],
-            'education' => json_decode($profile->education, true) ?? [],
-            'resume' => $profile->resume ?? '',
-            'portfolio' => $profile->portfolio ?? '',
-            'avatar' => $profile->avatar ?? '',
-        ];
-
-        return response()->json($profileData);
     }
 
     /**
@@ -118,86 +117,45 @@ class StudentProfileController extends Controller
             'avatar' => 'nullable|string', // Ini mungkin URL base64 encoded image
         ]);
 
-        // Ambil atau buat profile student
-        $profile = $user->studentProfile;
-        if (!$profile) {
-            $profile = $user->studentProfile()->create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'full_name' => $user->email,
-                'university' => '',
-                'major' => '',
-                'location' => '',
-                'skills' => json_encode([]),
-                'interests' => json_encode([]),
-                'experience' => json_encode([]),
-                'education' => json_encode([]),
-                'portfolio' => '',
-                'avatar' => '',
-                'resume' => '',
+        try {
+            $profileData = $request->only([
+                'name', 'email', 'university', 'major', 'location',
+                'skills', 'interests', 'experience', 'education',
+                'portfolio', 'avatar'
             ]);
-        }
 
-        // Siapkan data untuk diupdate
-        $updateData = [
-            'full_name' => $request->name ?? $profile->full_name,
-        ];
+            $profile = $this->profileService->updateStudentProfile($profileData, $user);
 
-        if ($request->has('university')) {
-            $updateData['university'] = $request->university;
-        }
-        if ($request->has('major')) {
-            $updateData['major'] = $request->major;
-        }
-        if ($request->has('location')) {
-            $updateData['location'] = $request->location;
-        }
-        if ($request->has('skills')) {
-            $updateData['skills'] = json_encode($request->skills);
-        }
-        if ($request->has('interests')) {
-            $updateData['interests'] = json_encode($request->interests);
-        }
-        if ($request->has('experience')) {
-            $updateData['experience'] = json_encode($request->experience);
-        }
-        if ($request->has('education')) {
-            $updateData['education'] = json_encode($request->education);
-        }
-        if ($request->has('portfolio')) {
-            $updateData['portfolio'] = $request->portfolio;
-        }
-        if ($request->has('avatar')) {
-            $updateData['avatar'] = $request->avatar;
-        }
+            // Jika email diubah, update di tabel users juga
+            if ($request->has('email') && $request->email !== $user->email) {
+                $user->update(['email' => $request->email]);
+            }
 
-        // Update data profil
-        $profile->update($updateData);
+            // Format data untuk response
+            $responseData = [
+                'id' => $user->id,
+                'name' => $profile->full_name,
+                'email' => $user->email,
+                'university' => $profile->university ?? '',
+                'major' => $profile->major ?? '',
+                'skills' => json_decode($profile->skills, true) ?? [],
+                'location' => $profile->location ?? '',
+                'interests' => json_decode($profile->interests, true) ?? [],
+                'experience' => json_decode($profile->experience, true) ?? [],
+                'education' => json_decode($profile->education, true) ?? [],
+                'resume' => $profile->resume ?? '',
+                'portfolio' => $profile->portfolio ?? '',
+                'avatar' => $profile->avatar ?? '',
+            ];
 
-        // Jika email diubah, update di tabel users juga
-        if ($request->has('email') && $request->email !== $user->email) {
-            $user->update(['email' => $request->email]);
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'profile' => $responseData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Format data untuk response
-        $profileData = [
-            'id' => $user->id,
-            'name' => $profile->full_name,
-            'email' => $user->email,
-            'university' => $profile->university ?? '',
-            'major' => $profile->major ?? '',
-            'skills' => json_decode($profile->skills, true) ?? [],
-            'location' => $profile->location ?? '',
-            'interests' => json_decode($profile->interests, true) ?? [],
-            'experience' => json_decode($profile->experience, true) ?? [],
-            'education' => json_decode($profile->education, true) ?? [],
-            'resume' => $profile->resume ?? '',
-            'portfolio' => $profile->portfolio ?? '',
-            'avatar' => $profile->avatar ?? '',
-        ];
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'profile' => $profileData
-        ]);
     }
 }

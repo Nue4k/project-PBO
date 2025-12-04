@@ -1,8 +1,24 @@
-// dataService.ts
-import { Feature, UserFlow, FAQ } from './interfaces';
+// app/services/content/DataService.ts
+import { Feature, UserFlow, FAQ } from '../../interfaces';
 
-export class DataService {
-  static getFeatures(): Feature[] {
+// Interface segregation - each service has its own interface
+export interface IFeatureService {
+  getFeatures(): Feature[];
+}
+
+export interface IUserFlowService {
+  getUserFlows(): UserFlow[];
+}
+
+export interface IFAQService {
+  getFAQs(): FAQ[];
+}
+
+export interface IContentService extends IFeatureService, IUserFlowService, IFAQService {}
+
+// Single responsibility - each service only handles its specific content type
+export class FeatureService implements IFeatureService {
+  getFeatures(): Feature[] {
     return [
       {
         title: "Integrated Recruitment Flow",
@@ -21,8 +37,10 @@ export class DataService {
       }
     ];
   }
+}
 
-  static getUserFlows(): UserFlow[] {
+export class UserFlowService implements IUserFlowService {
+  getUserFlows(): UserFlow[] {
     return [
       {
         name: "Mahasiswa",
@@ -34,8 +52,10 @@ export class DataService {
       }
     ];
   }
+}
 
-  static getFAQs(): FAQ[] {
+export class FAQService implements IFAQService {
+  getFAQs(): FAQ[] {
     return [
       {
         question: "Siapa saja yang dapat menggunakan InternSheep?",
@@ -58,5 +78,34 @@ export class DataService {
         answer: "Setiap lamaran memiliki status yang diperbarui secara real-time. Anda akan menerima notifikasi untuk setiap perubahan status."
       }
     ];
+  }
+}
+
+// Composition over inheritance - combine services in a content service
+export class ContentService implements IContentService {
+  private featureService: IFeatureService;
+  private userFlowService: IUserFlowService;
+  private faqService: IFAQService;
+
+  constructor(
+    featureService: IFeatureService = new FeatureService(),
+    userFlowService: IUserFlowService = new UserFlowService(),
+    faqService: IFAQService = new FAQService()
+  ) {
+    this.featureService = featureService;
+    this.userFlowService = userFlowService;
+    this.faqService = faqService;
+  }
+
+  getFeatures(): Feature[] {
+    return this.featureService.getFeatures();
+  }
+
+  getUserFlows(): UserFlow[] {
+    return this.userFlowService.getUserFlows();
+  }
+
+  getFAQs(): FAQ[] {
+    return this.faqService.getFAQs();
   }
 }

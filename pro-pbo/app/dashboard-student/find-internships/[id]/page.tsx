@@ -547,8 +547,8 @@ const ApplicationFormPage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       {internship.type === 'wfo' ? 'WFO' :
-                       internship.type === 'wfh' ? 'WFH' :
-                       'Hybrid'}
+                        internship.type === 'wfh' ? 'WFH' :
+                          'Hybrid'}
                     </span>
                     <span className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -613,11 +613,11 @@ const ApplicationFormPage = () => {
             </div>
 
             <h2 className={`text-xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Form Lamaran</h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Informasi Pribadi</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Surat Lamaran</label>
@@ -631,7 +631,7 @@ const ApplicationFormPage = () => {
                       required
                     ></textarea>
                   </div>
-                  
+
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Portofolio (Opsional)</label>
                     <input
@@ -644,7 +644,7 @@ const ApplicationFormPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Ketersediaan</label>
@@ -660,7 +660,7 @@ const ApplicationFormPage = () => {
                       <option value="2-months">2 bulan dari sekarang</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Durasi Harapan</label>
                     <select
@@ -679,7 +679,7 @@ const ApplicationFormPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Existing Documents Selection */}
               <div className={`rounded-xl p-6 shadow mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Pilih Dokumen dari Arsip Saya</h3>
@@ -688,41 +688,38 @@ const ApplicationFormPage = () => {
                   {studentDocuments.map((doc) => (
                     <div
                       key={doc.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                        selectedExistingDocs.includes(doc.id)
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedExistingDocs.includes(doc.id)
                           ? (darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50')
                           : (darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50')
-                      }`}
+                        }`}
                       onClick={() => toggleDocumentSelection(doc.id)}
                     >
                       <div className="flex items-center">
-                        <div className={`mr-3 text-xl ${
-                          doc.type.toUpperCase().includes('RESUME') ? 'text-blue-500' :
-                          doc.type.toUpperCase().includes('COVER') ? 'text-green-500' :
-                          doc.type.toUpperCase().includes('TRANSCRIPT') ? 'text-purple-500' :
-                          doc.type.toUpperCase().includes('CERTIFIC') ? 'text-yellow-500' :
-                          doc.type.toUpperCase().includes('PORTFOLIO') ? 'text-indigo-500' : 'text-gray-500'
-                        }`}>
-                          {doc.type.toUpperCase().includes('RESUME') ? '📄' :
-                           doc.type.toUpperCase().includes('COVER') ? '✉️' :
-                           doc.type.toUpperCase().includes('TRANSCRIPT') ? '🎓' :
-                           doc.type.toUpperCase().includes('CERTIFIC') ? '🏆' :
-                           doc.type.toUpperCase().includes('PORTFOLIO') ? '🖼️' : '📋'}
+                        <div className={`mr-3 text-xl ${(doc.type || '').toUpperCase().includes('RESUME') ? 'text-blue-500' :
+                            (doc.type || '').toUpperCase().includes('COVER') ? 'text-green-500' :
+                              (doc.type || '').toUpperCase().includes('TRANSCRIPT') ? 'text-purple-500' :
+                                (doc.type || '').toUpperCase().includes('CERTIFIC') ? 'text-yellow-500' :
+                                  (doc.type || '').toUpperCase().includes('PORTFOLIO') ? 'text-indigo-500' : 'text-gray-500'
+                          }`}>
+                          {(doc.type || '').toUpperCase().includes('RESUME') ? '📄' :
+                            (doc.type || '').toUpperCase().includes('COVER') ? '✉️' :
+                              (doc.type || '').toUpperCase().includes('TRANSCRIPT') ? '🎓' :
+                                (doc.type || '').toUpperCase().includes('CERTIFIC') ? '🏆' :
+                                  (doc.type || '').toUpperCase().includes('PORTFOLIO') ? '🖼️' : '📋'}
                         </div>
                         <div className="flex-1">
                           <p className={`font-medium truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{doc.name}</p>
-                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{doc.type.toUpperCase().includes('RESUME') ? 'Resume' :
-                           doc.type.toUpperCase().includes('COVER') ? 'Cover Letter' :
-                           doc.type.toUpperCase().includes('TRANSCRIPT') ? 'Transcript' :
-                           doc.type.toUpperCase().includes('CERTIFIC') ? 'Certificate' :
-                           doc.type.toUpperCase().includes('PORTFOLIO') ? 'Portfolio' :
-                           'Other'}</p>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{(doc.type || '').toUpperCase().includes('RESUME') ? 'Resume' :
+                            (doc.type || '').toUpperCase().includes('COVER') ? 'Cover Letter' :
+                              (doc.type || '').toUpperCase().includes('TRANSCRIPT') ? 'Transcript' :
+                                (doc.type || '').toUpperCase().includes('CERTIFIC') ? 'Certificate' :
+                                  (doc.type || '').toUpperCase().includes('PORTFOLIO') ? 'Portfolio' :
+                                    'Other'}</p>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          selectedExistingDocs.includes(doc.id)
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedExistingDocs.includes(doc.id)
                             ? (darkMode ? 'bg-blue-600 border-blue-600' : 'bg-blue-500 border-blue-500')
                             : (darkMode ? 'border-gray-500' : 'border-gray-300')
-                        }`}>
+                          }`}>
                           {selectedExistingDocs.includes(doc.id) && (
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -812,10 +809,10 @@ const ApplicationFormPage = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Informasi Tambahan</h3>
-                
+
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Catatan Tambahan (Opsional)</label>
                   <textarea
@@ -828,10 +825,10 @@ const ApplicationFormPage = () => {
                   ></textarea>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-4">
-                <a 
-                  href="/dashboard-student/find-internships" 
+                <a
+                  href="/dashboard-student/find-internships"
                   className={`px-6 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-700 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   Batal

@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Application;
-use App\Models\Job;
-use App\Models\StudentProfile;
+use App\Services\ApplicationServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class ApplicationController extends Controller
 {
+    protected ApplicationServiceInterface $applicationService;
+
+    public function __construct(ApplicationServiceInterface $applicationService)
+    {
+        $this->applicationService = $applicationService;
+    }
+
     /**
      * Get applications submitted by the authenticated student.
      *
@@ -21,77 +25,9 @@ class ApplicationController extends Controller
     public function index(): JsonResponse
     {
         try {
-            // Get authenticated user
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the student profile
-            $studentProfile = $user->studentProfile;
-
-            // If no student profile exists, return empty list
-            if (!$studentProfile) {
-                \Log::warning("No student profile found for user: {$user->id}");
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'No applications found'
-                ]);
-            }
-
-            // Get applications with job details
-            $applications = $studentProfile->applications()
-                ->with(['job', 'job.companyProfile', 'resume'])
-                ->get();
-
-            // Format the applications for the frontend
-            $formattedApplications = $applications->map(function ($application) {
-                $job = $application->job;
-                $companyProfile = $job->companyProfile;
-
-                return [
-                    'id' => $application->id,
-                    'job_id' => $job->id,
-                    'title' => $job->title,
-                    'company' => $companyProfile ? $companyProfile->company_name : 'Unknown Company',
-                    'position' => $job->title,
-                    'appliedDate' => is_string($application->created_at) ? $application->created_at : $application->created_at->format('Y-m-d'),
-                    'status' => ucfirst($application->status), // Convert 'applied' to 'Applied'
-                    'deadline' => $job->closing_date ? (is_string($job->closing_date) ? $job->closing_date : $job->closing_date->format('Y-m-d')) : '',
-                    'description' => $job->description ?? '',
-                    'requirements' => json_decode($job->requirements ?? '{}', true)['majors'] ?? [],
-                    'statusDate' => is_string($application->updated_at) ? $application->updated_at : $application->updated_at->format('Y-m-d'),
-                    'feedback_note' => $application->feedback_note ?? '',
-                    'cover_letter' => $application->cover_letter ?? '',
-                    'portfolio_url' => $application->portfolio_url ?? '',
-                    'availability' => $application->availability ?? '',
-                    'expected_duration' => $application->expected_duration ?? '',
-                    'additional_info' => $application->additional_info ?? '',
-                    'interview_date' => $application->interview_date,
-                    'interview_time' => $application->interview_time,
-                    'interview_method' => $application->interview_method,
-                    'interview_location' => $application->interview_location,
-                    'interview_notes' => $application->interview_notes,
-                    'attendance_confirmed' => $application->attendance_confirmed,
-                    'attendance_confirmed_at' => $application->attendance_confirmed_at,
-                    'attendance_confirmation_method' => $application->attendance_confirmation_method,
-                    'resume_id' => $application->resume_id,
-                    'resume_name' => $application->resume ? $application->resume->title : ($application->resume_id ? 'Resume Dokumen Tidak Ditemukan' : null),
-                    'resume_type' => $application->resume ? $application->resume->file_type : null,
-                    'resume_url' => $application->resume ? url('storage/' . $application->resume->file_url) : null
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $formattedApplications,
-                'count' => $formattedApplications->count()
-            ]);
+            $result = $this->applicationService->getStudentApplications($user);
+            return response()->json($result);
         } catch (\Exception $e) {
             \Log::error('Failed to fetch student applications: ' . $e->getMessage() . ' on line ' . $e->getLine());
             return response()->json([
@@ -110,43 +46,7 @@ class ApplicationController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            $studentProfile = $user->studentProfile;
-
-            if (!$studentProfile) {
-                // Create a default student profile if it doesn't exist
-                $studentProfile = $user->studentProfile()->create([
-                    'id' => Str::uuid(),
-                    'user_id' => $user->id,
-                    'full_name' => $user->email,
-                    'university' => '',
-                    'major' => '',
-                    'gpa' => 0.0,
-                    'graduation_year' => null,
-                    'status' => 'undergraduate',
-                    'bio' => '',
-                    'phone_number' => '',
-                    'linkedin_url' => '',
-                    'skills' => '[]',
-                    'interests' => '[]',
-                    'experience' => '[]',
-                    'education' => '[]',
-                    'portfolio' => '',
-                    'avatar' => '',
-                    'location' => '',
-                    'resume' => ''
-                ]);
-            }
-
-            $validatedData = $request->validate([
+            $request->validate([
                 'job_id' => 'required|exists:jobs,id',
                 'cover_letter' => 'required|string',
                 'portfolio_url' => 'nullable|string',
@@ -155,62 +55,11 @@ class ApplicationController extends Controller
                 'additional_info' => 'nullable|string',
             ]);
 
-            // Handle resume_id separately to avoid validation error if the ID is not valid
-            $resumeId = $request->resume_id;
-            if ($resumeId !== null && $resumeId !== '') {
-                // Check if the resume_id exists in the documents table
-                $resumeExists = \App\Models\Document::where('id', $resumeId)->exists();
-                if (!$resumeExists) {
-                    // If resume_id is provided but doesn't exist, set it to null
-                    $validatedData['resume_id'] = null;
-                } else {
-                    $validatedData['resume_id'] = $resumeId;
-                }
-            } else {
-                $validatedData['resume_id'] = null;
-            }
-
-            // Check if the job exists
-            $job = Job::find($request->job_id);
-            if (!$job) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Job not found'
-                ], 404);
-            }
-
-            // Check if the student has already applied for this job
-            $existingApplication = Application::where([
-                'job_id' => $request->job_id,
-                'student_id' => $studentProfile->id
-            ])->first();
-
-            if ($existingApplication) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You have already applied for this job'
-                ], 400);
-            }
-
-            // Create the application
-            $application = new Application();
-            $application->id = Str::uuid();
-            $application->job_id = $validatedData['job_id'];
-            $application->student_id = $studentProfile->id;
-            $application->resume_id = $validatedData['resume_id'];
-            $application->cover_letter = $validatedData['cover_letter'];
-            $application->portfolio_url = $validatedData['portfolio_url'];
-            $application->availability = $validatedData['availability'];
-            $application->expected_duration = $validatedData['expected_duration'];
-            $application->additional_info = $validatedData['additional_info'];
-            $application->status = 'applied'; // Default status
-            $application->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Application submitted successfully',
-                'data' => $application
-            ], 201);
+            $user = Auth::user();
+            $applicationData = $request->all();
+            
+            $result = $this->applicationService->createApplication($applicationData, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to submit application: ' . $e->getMessage());
@@ -231,69 +80,8 @@ class ApplicationController extends Controller
     {
         try {
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the student profile
-            $studentProfile = $user->studentProfile;
-
-            if (!$studentProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student profile not found'
-                ], 404);
-            }
-
-            // Find the application that belongs to this student
-            $application = Application::where('id', $id)
-                ->where('student_id', $studentProfile->id)
-                ->with(['job', 'job.companyProfile', 'resume'])
-                ->first();
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found'
-                ], 404);
-            }
-
-            // Format the application data
-            $job = $application->job;
-            $companyProfile = $job->companyProfile;
-
-            $formattedApplication = [
-                'id' => $application->id,
-                'job_id' => $job->id,
-                'title' => $job->title,
-                'company' => $companyProfile ? $companyProfile->company_name : 'Unknown Company',
-                'position' => $job->title,
-                'appliedDate' => is_string($application->created_at) ? $application->created_at : $application->created_at->format('Y-m-d'),
-                'status' => ucfirst($application->status),
-                'deadline' => $job->closing_date ? (is_string($job->closing_date) ? $job->closing_date : $job->closing_date->format('Y-m-d')) : '',
-                'description' => $job->description ?? '',
-                'requirements' => json_decode($job->requirements ?? '{}', true)['majors'] ?? [],
-                'statusDate' => is_string($application->updated_at) ? $application->updated_at : $application->updated_at->format('Y-m-d'),
-                'feedback_note' => $application->feedback_note ?? '',
-                'cover_letter' => $application->cover_letter ?? '',
-                'portfolio_url' => $application->portfolio_url ?? '',
-                'availability' => $application->availability ?? '',
-                'expected_duration' => $application->expected_duration ?? '',
-                'additional_info' => $application->additional_info ?? '',
-                'resume_id' => $application->resume_id,
-                'resume_name' => $application->resume ? $application->resume->title : ($application->resume_id ? 'Resume Dokumen Tidak Ditemukan' : null),
-                'resume_type' => $application->resume ? $application->resume->file_type : null,
-                'resume_url' => $application->resume ? url('storage/' . $application->resume->file_url) : null
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $formattedApplication
-            ]);
+            $result = $this->applicationService->getApplicationById($id, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to fetch application: ' . $e->getMessage());
@@ -315,48 +103,10 @@ class ApplicationController extends Controller
     {
         try {
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the student profile
-            $studentProfile = $user->studentProfile;
-
-            if (!$studentProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student profile not found'
-                ], 404);
-            }
-
-            // Find the application that belongs to this student
-            $application = Application::where('id', $id)
-                ->where('student_id', $studentProfile->id)
-                ->first();
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found'
-                ], 404);
-            }
-
-            // For now, we allow withdrawal of applications (status change to 'withdrawn')
-            $status = $request->status;
-            if ($status === 'withdrawn') {
-                $application->status = $status;
-                $application->save();
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Application updated successfully',
-                'data' => $application
-            ]);
+            $applicationData = $request->all();
+            
+            $result = $this->applicationService->updateApplication($id, $applicationData, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to update application: ' . $e->getMessage());
@@ -377,43 +127,8 @@ class ApplicationController extends Controller
     {
         try {
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the student profile
-            $studentProfile = $user->studentProfile;
-
-            if (!$studentProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student profile not found'
-                ], 404);
-            }
-
-            // Find the application that belongs to this student
-            $application = Application::where('id', $id)
-                ->where('student_id', $studentProfile->id)
-                ->first();
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found'
-                ], 404);
-            }
-
-            // Delete the application
-            $application->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Application withdrawn successfully'
-            ]);
+            $result = $this->applicationService->deleteApplication($id, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to delete application: ' . $e->getMessage());
@@ -433,86 +148,8 @@ class ApplicationController extends Controller
     {
         try {
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'company') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the company profile
-            $companyProfile = $user->companyProfile;
-
-            if (!$companyProfile) {
-                \Log::warning("No company profile found for user: {$user->id}");
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'No applications found'
-                ]);
-            }
-
-            // Get jobs posted by this company
-            $companyJobs = $companyProfile->jobs()->pluck('id');
-
-            // Get applications for those jobs
-            $applications = Application::whereIn('job_id', $companyJobs)
-                ->with(['studentProfile.user', 'job', 'resume']) // Include student, job, and resume info
-                ->get();
-
-            // Log the count of applications being returned for debugging
-            \Log::info('Returning ' . $applications->count() . ' applications for company');
-
-            // Format the applications for the frontend
-            $formattedApplications = $applications->map(function ($application) {
-                $studentProfile = $application->studentProfile;
-                $job = $application->job;
-                $student = $studentProfile->user; // Get the student user account
-
-                // Log specific application data if it has interview scheduled
-                if ($application->interview_date) {
-                    \Log::info('Application with interview: ' . $application->id . ' status: ' . $application->status . ' date: ' . $application->interview_date);
-                }
-
-                return [
-                    'id' => $application->id,
-                    'job_id' => $job->id,
-                    'job_title' => $job->title,
-                    'student_id' => $studentProfile->id,
-                    'student_name' => $studentProfile->full_name ?? $student->email,
-                    'student_email' => $student->email,
-                    'applied_date' => is_string($application->created_at) ? $application->created_at : $application->created_at->format('Y-m-d'),
-                    'status' => ucfirst($application->status), // Convert 'applied' to 'Applied'
-                    'feedback_note' => $application->feedback_note ?? '',
-                    'location' => $job->location ?? '',
-                    'job_type' => $job->job_type ?? '',
-                    'description' => $job->description ?? '',
-                    'cover_letter' => $application->cover_letter ?? '',
-                    'portfolio_url' => $application->portfolio_url ?? '',
-                    'availability' => $application->availability ?? '',
-                    'expected_duration' => $application->expected_duration ?? '',
-                    'additional_info' => $application->additional_info ?? '',
-                    'interview_date' => $application->interview_date,
-                    'interview_time' => $application->interview_time,
-                    'interview_method' => $application->interview_method,
-                    'interview_location' => $application->interview_location,
-                    'interview_notes' => $application->interview_notes,
-                    'attendance_confirmed' => $application->attendance_confirmed,
-                    'attendance_confirmed_at' => $application->attendance_confirmed_at,
-                    'attendance_confirmation_method' => $application->attendance_confirmation_method,
-                    'resume_id' => $application->resume_id,
-                    'resume_name' => $application->resume ? $application->resume->title : ($application->resume_id ? 'Resume Dokumen Tidak Ditemukan' : null),
-                    'resume_type' => $application->resume ? $application->resume->file_type : null,
-                    'resume_url' => $application->resume ? url('storage/' . $application->resume->file_url) : null,
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $formattedApplications,
-                'count' => $formattedApplications->count()
-            ]);
+            $result = $this->applicationService->getCompanyApplications($user);
+            return response()->json($result);
         } catch (\Exception $e) {
             \Log::error('Failed to fetch company applications: ' . $e->getMessage() . ' on line ' . $e->getLine());
             return response()->json([
@@ -532,44 +169,6 @@ class ApplicationController extends Controller
     public function setInterviewSchedule(string $id, Request $request): JsonResponse
     {
         try {
-            $user = Auth::user();
-
-            if (!$user || $user->role !== 'company') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the company profile
-            $companyProfile = $user->companyProfile;
-
-            if (!$companyProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Company profile not found'
-                ], 404);
-            }
-
-            // Find the application
-            $application = Application::with('job.companyProfile')->find($id);
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found'
-                ], 404);
-            }
-
-            // Check if the job associated with this application belongs to the authenticated company
-            if ($application->job->companyProfile->id !== $companyProfile->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized to set interview schedule for this application'
-                ], 403);
-            }
-
-            // Validate request data
             $request->validate([
                 'interview_date' => 'required|date',
                 'interview_time' => 'required|date_format:H:i',
@@ -578,46 +177,11 @@ class ApplicationController extends Controller
                 'interview_notes' => 'nullable|string',
             ]);
 
-            \DB::transaction(function () use ($request, $application, $id) {
-                // Update interview schedule fields individually to ensure all changes are saved to the database
-                $application->interview_date = $request->interview_date;
-                $application->interview_time = $request->interview_time;
-                $application->interview_method = $request->interview_method;
-                $application->interview_location = $request->interview_location ?? null;
-                $application->interview_notes = $request->interview_notes ?? null;
-                $application->status = 'interview'; // Update status to 'interview' to indicate that an interview has been scheduled
-
-                // Log the values before saving for debugging
-                \Log::info('Setting interview schedule for application: ' . $id . ' with data: ' . json_encode([
-                    'interview_date' => $request->interview_date,
-                    'interview_time' => $request->interview_time,
-                    'interview_method' => $request->interview_method,
-                    'interview_location' => $request->interview_location,
-                    'interview_notes' => $request->interview_notes,
-                    'status' => 'interview'
-                ]));
-
-                // Explicitly save the changes to database
-                $application->save();
-
-                // Log the saved values for verification
-                \Log::info('Saved application data: ' . json_encode([
-                    'id' => $application->id,
-                    'status' => $application->status,
-                    'interview_date' => $application->interview_date,
-                    'interview_time' => $application->interview_time,
-                    'interview_method' => $application->interview_method
-                ]));
-            });
-
-            // Refresh the application instance to make sure we have latest data
-            $application->refresh();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Interview schedule set successfully',
-                'data' => $application
-            ], 200);
+            $user = Auth::user();
+            $scheduleData = $request->all();
+            
+            $result = $this->applicationService->setInterviewSchedule($id, $scheduleData, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to set interview schedule: ' . $e->getMessage());
@@ -638,60 +202,8 @@ class ApplicationController extends Controller
     {
         try {
             $user = Auth::user();
-
-            if (!$user || $user->role !== 'student') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the student profile
-            $studentProfile = $user->studentProfile;
-
-            if (!$studentProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student profile not found'
-                ], 404);
-            }
-
-            // Find the application that belongs to this student
-            $application = $studentProfile->applications()
-                ->where('id', $id)
-                ->first();
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found or does not belong to you'
-                ], 404);
-            }
-
-            // Check if the application has an interview scheduled
-            if (!$application->interview_date) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No interview scheduled for this application'
-                ], 400);
-            }
-
-            // Update attendance confirmation
-            $application->update([
-                'attendance_confirmed' => true,
-                'attendance_confirmed_at' => now(),
-                'attendance_confirmation_method' => 'system' // Konfirmasi dilakukan melalui sistem
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Attendance confirmed successfully',
-                'data' => [
-                    'attendance_confirmed' => $application->attendance_confirmed,
-                    'attendance_confirmed_at' => $application->attendance_confirmed_at,
-                    'attendance_confirmation_method' => $application->attendance_confirmation_method
-                ]
-            ], 200);
+            $result = $this->applicationService->confirmAttendance($id, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to confirm attendance: ' . $e->getMessage());
@@ -711,67 +223,16 @@ class ApplicationController extends Controller
     public function updateStatus(string $id, Request $request): JsonResponse
     {
         try {
-            $user = Auth::user();
-
-            if (!$user || $user->role !== 'company') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 401);
-            }
-
-            // Get the company profile
-            $companyProfile = $user->companyProfile;
-
-            if (!$companyProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Company profile not found'
-                ], 404);
-            }
-
-            // Find the application
-            $application = Application::with('job.companyProfile')->find($id);
-
-            if (!$application) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Application not found'
-                ], 404);
-            }
-
-            // Check if the job associated with this application belongs to the authenticated company
-            if ($application->job->companyProfile->id !== $companyProfile->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized to update status for this application'
-                ], 403);
-            }
-
-            // Validate request data
             $request->validate([
                 'status' => 'required|in:applied,reviewed,interview,accepted,rejected',
                 'feedback_note' => 'nullable|string'
             ]);
 
-            \DB::transaction(function () use ($request, $application) {
-                // Update application status and feedback note individually to ensure changes are saved to database
-                $application->status = $request->status;
-                $application->feedback_note = $request->feedback_note ?? $application->feedback_note;
-                $application->save();
-
-                // Log the update for debugging
-                \Log::info('Updated application status: ' . $application->id . ' to status: ' . $application->status);
-            });
-
-            // Refresh to get latest data
-            $application->refresh();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Application status updated successfully',
-                'data' => $application
-            ], 200);
+            $user = Auth::user();
+            $statusData = $request->all();
+            
+            $result = $this->applicationService->updateStatus($id, $statusData, $user);
+            return response()->json($result);
 
         } catch (\Exception $e) {
             \Log::error('Failed to update application status: ' . $e->getMessage());
@@ -791,9 +252,9 @@ class ApplicationController extends Controller
     public function serveApplicationResume(string $id)
     {
         try {
-            // Log incoming request
-            \Log::info('Serve application resume request - Application ID: ' . $id);
-
+            // This method handles file serving and doesn't use the service pattern
+            // The original implementation is kept since it involves file handling
+            // which is more complex to abstract in the service layer
             $user = Auth::user();
 
             if (!$user) {
@@ -804,6 +265,7 @@ class ApplicationController extends Controller
                 ], 401);
             }
 
+            // Check if application exists and user has access
             $application = null;
 
             if ($user->role === 'company') {
@@ -824,7 +286,7 @@ class ApplicationController extends Controller
                 \Log::info('Company has ' . $companyJobs->count() . ' jobs posted');
 
                 // Find the application for one of their jobs
-                $application = Application::whereIn('job_id', $companyJobs)
+                $application = \App\Models\Application::whereIn('job_id', $companyJobs)
                     ->where('id', $id)
                     ->with('resume') // Load the resume relationship
                     ->first();
@@ -841,7 +303,7 @@ class ApplicationController extends Controller
                     ], 404);
                 }
 
-                $application = Application::where('student_id', $studentProfile->id)
+                $application = \App\Models\Application::where('student_id', $studentProfile->id)
                     ->where('id', $id)
                     ->with('resume') // Load the resume relationship
                     ->first();
@@ -872,9 +334,6 @@ class ApplicationController extends Controller
 
             // Log the resume file details
             \Log::info('Resume file found - Path: ' . $application->resume->file_url . ', Type: ' . ($application->resume->file_type ?? 'unknown'));
-
-            // Debug: Log the resume details
-            \Log::info('Resume details - ID: ' . $application->resume->id . ', Path: ' . $application->resume->file_url . ', Type: ' . $application->resume->file_type);
 
             // Check if file exists in the public storage disk
             $fileExists = \Storage::disk('public')->exists($application->resume->file_url);

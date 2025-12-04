@@ -25,7 +25,23 @@ const DashboardPage = () => {
   const { user, isLoading, token } = useAuth(); // Get the token as well
   const router = useRouter();
 
-  // Redirect based on user role
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
+  const [stats, setStats] = useState<StatCard[]>([]);
+  const [applicationStats, setApplicationStats] = useState({
+    accepted: 0,
+    inProcess: 0,
+    rejected: 0,
+    conversionRate: 0
+  });
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [topJobs, setTopJobs] = useState<any[]>([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>([]);
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Redirect based on user role - this should be one of the first hooks
   useEffect(() => {
     if (!isLoading && user) {
       if (user.role === 'student') {
@@ -41,76 +57,21 @@ const DashboardPage = () => {
     }
   }, [user, isLoading, router]);
 
-  // Show loading state while auth status is being determined
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p>Memuat dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is not loaded and not loading anymore, redirect to login
-  if (!user) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p>Anda harus login terlebih dahulu.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is loaded but not a company, redirect appropriately
-  if (user.role !== 'company') {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p>Halaman tidak ditemukan atau tidak diizinkan.</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Check system preference for dark mode
   useEffect(() => {
-    // Check system preference for dark mode
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setDarkMode(true);
     }
   }, []);
 
+  // Update the class on the document element
   useEffect(() => {
-    // Update the class on the document element
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
-  const [stats, setStats] = useState<StatCard[]>([
-    { title: 'Total Magang', value: '0', change: 'Memuat...', icon: '💼' },
-    { title: 'Mahasiswa Aktif', value: '0', change: 'Memuat...', icon: '👥' },
-    { title: 'Lamaran Masuk', value: '0', change: 'Memuat...', icon: '📋' },
-    { title: 'Diterima', value: '0', change: 'Memuat...', icon: '✅' },
-  ]);
-
-  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [applicationStats, setApplicationStats] = useState({
-    accepted: 0,
-    inProcess: 0,
-    rejected: 0,
-    conversionRate: 0
-  });
-  const [topJobs, setTopJobs] = useState<Array<{rank: number, title: string, applications: number}>>([]);
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState<Array<{title: string, daysLeft: number, pendingApplications: number}>>([]);
-  const [companyProfile, setCompanyProfile] = useState<any>(null);
 
   // Fetch company profile
   useEffect(() => {
@@ -122,8 +83,8 @@ const DashboardPage = () => {
 
       console.log('Fetching company profile with token:', token);
       try {
-        const profile = await import('../services/internshipService').then(mod => mod.getCompanyProfile);
-        const companyData = await profile(token);
+        const { getCompanyProfile } = await import('../services/internshipService');
+        const companyData = await getCompanyProfile(token);
         console.log('Fetched company profile data:', companyData);
         setCompanyProfile(companyData);
       } catch (error) {
@@ -155,8 +116,9 @@ const DashboardPage = () => {
         });
 
         let totalInternships = 0;
+        let jobsData: any = { data: [] };
         if (jobsResponse.ok) {
-          const jobsData = await jobsResponse.json();
+          jobsData = await jobsResponse.json();
           totalInternships = jobsData.data?.length || 0;
         }
 
@@ -296,6 +258,42 @@ const DashboardPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Handle loading and user validation after all hooks are defined
+  // Show loading state while auth status is being determined
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p>Memuat dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not loaded and not loading anymore, redirect to login
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p>Anda harus login terlebih dahulu.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is loaded but not a company, redirect appropriately
+  if (user.role !== 'company') {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p>Halaman tidak ditemukan atau tidak diizinkan.</p>
+        </div>
+      </div>
+    );
+  }
+
+
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
@@ -303,7 +301,7 @@ const DashboardPage = () => {
         <div className="max-w-[1200px] mx-auto px-[40px] py-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <button 
+              <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="md:hidden mr-4"
               >
@@ -374,12 +372,12 @@ const DashboardPage = () => {
         <main className={`flex-1 ${sidebarOpen ? 'md:ml-64' : ''} p-6 pt-12`}>
           <div className="max-w-[1200px] mx-auto">
             <h1 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Selamat Datang di Dashboard Perusahaan</h1>
-            
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {stats.map((stat, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
                 >
                   <div className="flex justify-between items-start">
@@ -484,11 +482,10 @@ const DashboardPage = () => {
                       topJobs.map((job) => (
                         <div key={job.rank} className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 ${
-                              job.rank === 1
-                                ? (darkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800')
-                                : (darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700')
-                            }`}>
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 ${job.rank === 1
+                              ? (darkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800')
+                              : (darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700')
+                              }`}>
                               {job.rank}
                             </span>
                             <div>

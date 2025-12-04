@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/authContext';
 import { useRouter } from 'next/navigation';
-import { getStudentApplications } from '../services/internshipService';
+import { ApplicationService } from '../services/internship/InternshipService';
 import Sidebar from '../components/Sidebar';
 
 const StudentDashboardPage = () => {
@@ -100,7 +100,8 @@ const StudentDashboardPage = () => {
     const fetchStats = async () => {
       if (token) {
         try {
-          const apps = await getStudentApplications(token);
+          const applicationService = new ApplicationService();
+          const apps = await applicationService.getStudentApplications(token);
 
           // Calculate stats from applications
           const activeApps = apps.filter((app: any) =>
@@ -148,7 +149,8 @@ const StudentDashboardPage = () => {
     const fetchRecentActivities = async () => {
       if (token) {
         try {
-          const apps = await getStudentApplications(token);
+          const applicationService = new ApplicationService();
+          const apps = await applicationService.getStudentApplications(token);
 
           // Format applications as recent activities
           const activities = apps.slice(0, 4).map((app: any, index: number) => ({
@@ -187,7 +189,8 @@ const StudentDashboardPage = () => {
     const fetchDeadlines = async () => {
       if (token) {
         try {
-          const apps = await getStudentApplications(token);
+          const applicationService = new ApplicationService();
+          const apps = await applicationService.getStudentApplications(token);
 
           // Format application deadlines
           const appDeadlines = apps
@@ -358,19 +361,17 @@ const StudentDashboardPage = () => {
                     <div>
                       <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{stat.title}</p>
                       <p className={`text-2xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
-                      <p className={`text-sm mt-2 ${
-                        stat.change.startsWith('+')
-                          ? 'text-green-500'
-                          : stat.change.startsWith('-')
+                      <p className={`text-sm mt-2 ${stat.change.startsWith('+')
+                        ? 'text-green-500'
+                        : stat.change.startsWith('-')
                           ? 'text-red-500'
                           : 'text-gray-500'
-                      }`}>{stat.change}</p>
+                        }`}>{stat.change}</p>
                     </div>
-                    <div className={`text-2xl ${
-                      stat.color === 'blue' ? 'text-blue-500' :
+                    <div className={`text-2xl ${stat.color === 'blue' ? 'text-blue-500' :
                       stat.color === 'green' ? 'text-green-500' :
-                      'text-purple-500'
-                    }`}>
+                        'text-purple-500'
+                      }`}>
                       {stat.icon}
                     </div>
                   </div>
@@ -398,16 +399,15 @@ const StudentDashboardPage = () => {
                   ) : recentActivities.length > 0 ? (
                     recentActivities.map((activity) => (
                       <div key={activity.id} className="flex items-start border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
-                        <div className={`mr-3 mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                          activity.type === 'application' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                        <div className={`mr-3 mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${activity.type === 'application' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
                           activity.type === 'update' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
-                          activity.type === 'message' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
-                          'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
-                        }`}>
+                            activity.type === 'message' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
+                          }`}>
                           {activity.type === 'application' ? '📋' :
-                           activity.type === 'update' ? '🔄' :
-                           activity.type === 'message' ? '💬' :
-                           '✅'}
+                            activity.type === 'update' ? '🔄' :
+                              activity.type === 'message' ? '💬' :
+                                '✅'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{activity.activity}</p>
@@ -447,13 +447,12 @@ const StudentDashboardPage = () => {
                             <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{deadline.title}</p>
                             <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{deadline.company}</p>
                           </div>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            deadline.daysLeft <= 5
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-                              : deadline.daysLeft <= 10
+                          <span className={`px-2 py-1 rounded-full text-xs ${deadline.daysLeft <= 5
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                            : deadline.daysLeft <= 10
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
                               : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                          }`}>
+                            }`}>
                             {deadline.daysLeft} hari
                           </span>
                         </div>

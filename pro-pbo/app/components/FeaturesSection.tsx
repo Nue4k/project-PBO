@@ -1,9 +1,9 @@
 // FeaturesSection.tsx
 import { SectionProps } from '../interfaces';
-import { DataService } from '../dataService';
+import { ContentService } from '../services/content/DataService';
 
 const FeaturesSection = ({ darkMode }: SectionProps) => {
-  const features = DataService.getFeatures();
+  const features = new ContentService().getFeatures();
 
   return (
     <section id="features" className={`py-20 px-5 ${darkMode ? 'bg-gray-800' : 'bg-[#f5f5f5]'}`}>

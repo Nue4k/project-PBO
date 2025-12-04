@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyProfile;
-use App\Models\User;
+use App\Services\ProfileServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class CompanyProfileController extends Controller
 {
+    protected ProfileServiceInterface $profileService;
+
+    public function __construct(ProfileServiceInterface $profileService)
+    {
+        $this->profileService = $profileService;
+    }
+
     /**
      * Get the authenticated company user's profile.
      *
@@ -34,39 +40,35 @@ class CompanyProfileController extends Controller
             ], 403);
         }
 
-        // Ambil profile company terkait
-        $profile = $user->companyProfile;
+        try {
+            $profile = $this->profileService->getCompanyProfile($user);
 
-        // Jika profile belum ada, buat profil kosong
-        if (!$profile) {
-            $profile = $user->companyProfile()->create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'company_name' => $user->email, // Gunakan email sebagai default nama perusahaan
-                'description' => '',
-                'industry' => '',
-                'location' => '',
-                'contact_email' => $user->email, // Gunakan email user sebagai default
-                'contact_phone' => '',
-                'website' => '',
-                'logo_url' => '',
-            ]);
+            if (!$profile) {
+                return response()->json([
+                    'message' => 'Company profile not found.'
+                ], 404);
+            }
+
+            // Format data sesuai dengan frontend - account for field name differences
+            $profileData = [
+                'id' => $user->id,
+                'name' => $profile->company_name,
+                'email' => $user->email,
+                'description' => $profile->description ?? '',
+                'industry' => $profile->industry ?? '',
+                'location' => $profile->address ?? '',  // Map database address to frontend location
+                'contactEmail' => $profile->contact_email ?? $user->email,  // Map database contact_email to frontend contactEmail
+                'contactPhone' => $profile->contact_phone ?? '',  // Map database contact_phone to frontend contactPhone
+                'website' => $profile->website_url ?? '',  // Map database website_url to frontend website
+                'logo' => $profile->logo_url ?? '',
+            ];
+
+            return response()->json($profileData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Format data sesuai dengan frontend
-        $profileData = [
-            'id' => $user->id,
-            'name' => $profile->company_name,
-            'email' => $user->email,
-            'description' => $profile->description ?? '',
-            'industry' => $profile->industry ?? '',
-            'location' => $profile->address ?? '',
-            'contactEmail' => $profile->contact_email ?? $user->email,
-            'contactPhone' => $profile->contact_phone ?? '',
-            'website' => $profile->website_url ?? '',
-            'logo' => $profile->logo_url ?? '',
-        ];
-
-        return response()->json($profileData);
     }
 
     /**
@@ -106,79 +108,41 @@ class CompanyProfileController extends Controller
             'logo' => 'nullable|string', // Ini mungkin URL base64 encoded image
         ]);
 
-        // Ambil atau buat profile company
-        $profile = $user->companyProfile;
-        if (!$profile) {
-            $profile = $user->companyProfile()->create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'user_id' => $user->id,
-                'company_name' => $user->email,
-                'description' => '',
-                'industry' => '',
-                'website_url' => '',
-                'address' => '',
-                'logo_url' => '',
-                'contact_email' => $user->email, // Use the user's email as default
-                'contact_phone' => '',
+        try {
+            $profileData = $request->only([
+                'name', 'email', 'description', 'industry', 'location',
+                'contactEmail', 'contactPhone', 'website', 'logo'
             ]);
-        }
 
-        // Siapkan data untuk diupdate
-        $updateData = [
-            'company_name' => $request->name ?? $profile->company_name,
-        ];
+            $profile = $this->profileService->updateCompanyProfile($profileData, $user);
 
-        if ($request->has('description')) {
-            $updateData['description'] = $request->description;
-        }
-        if ($request->has('industry')) {
-            $updateData['industry'] = $request->industry;
-        }
-        // Note: The frontend sends 'location' but the database column is 'address'
-        if ($request->has('location')) {
-            $updateData['address'] = $request->location;
-        }
-        // Note: The frontend sends 'contactEmail' but the database column is 'contact_email'
-        if ($request->has('contactEmail')) {
-            $updateData['contact_email'] = $request->contactEmail;
-        }
-        // Note: The frontend sends 'contactPhone' and the database column is 'contact_phone'
-        if ($request->has('contactPhone')) {
-            $updateData['contact_phone'] = $request->contactPhone;
-        }
-        // Note: The frontend sends 'website' but the database column is 'website_url'
-        if ($request->has('website')) {
-            $updateData['website_url'] = $request->website;
-        }
-        if ($request->has('logo')) {
-            $updateData['logo_url'] = $request->logo;
-        }
+            // Jika email diubah, update di tabel users juga
+            if ($request->has('email') && $request->email !== $user->email) {
+                $user->update(['email' => $request->email]);
+            }
 
-        // Update data profil
-        $profile->update($updateData);
+            // Format data untuk response - account for field name differences
+            $responseData = [
+                'id' => $user->id,
+                'name' => $profile->company_name,
+                'email' => $user->email,
+                'description' => $profile->description ?? '',
+                'industry' => $profile->industry ?? '',
+                'location' => $profile->address ?? '',  // Map database address to frontend location
+                'contactEmail' => $profile->contact_email ?? $user->email,  // Map database contact_email to frontend contactEmail
+                'contactPhone' => $profile->contact_phone ?? '',  // Map database contact_phone to frontend contactPhone
+                'website' => $profile->website_url ?? '',  // Map database website_url to frontend website
+                'logo' => $profile->logo_url ?? '',
+            ];
 
-        // Jika email diubah, update di tabel users juga
-        if ($request->has('email') && $request->email !== $user->email) {
-            $user->update(['email' => $request->email]);
+            return response()->json([
+                'message' => 'Company profile updated successfully',
+                'profile' => $responseData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Format data untuk response
-        $profileData = [
-            'id' => $user->id,
-            'name' => $profile->company_name,
-            'email' => $user->email,
-            'description' => $profile->description ?? '',
-            'industry' => $profile->industry ?? '',
-            'location' => $profile->address ?? '',
-            'contactEmail' => $profile->contact_email ?? $user->email,
-            'contactPhone' => $profile->contact_phone ?? '',
-            'website' => $profile->website_url ?? '',
-            'logo' => $profile->logo_url ?? '',
-        ];
-
-        return response()->json([
-            'message' => 'Company profile updated successfully',
-            'profile' => $profileData
-        ]);
     }
 }
