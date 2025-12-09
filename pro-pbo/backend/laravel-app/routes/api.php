@@ -2,9 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
-// Ganti ProductController dengan controller yang relevan nanti
-// use App\Http\Controllers\Api\ProductController;
-
 // Route Otentikasi
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
