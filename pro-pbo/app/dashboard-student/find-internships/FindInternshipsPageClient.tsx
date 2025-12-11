@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { getStudentProfile } from '../../lib/apiService';
 import { getAllInternships } from '../../services/internshipService';
 import Sidebar from '../../components/Sidebar';
@@ -27,7 +28,7 @@ type Internship = {
 };
 
 const FindInternshipsPageClient = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,25 +45,7 @@ const FindInternshipsPageClient = () => {
 
   const { user, token } = useAuth();
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -206,7 +189,7 @@ const FindInternshipsPageClient = () => {
       const skillList = skillFilter.split(',').map(s => s.trim().toLowerCase());
       matchesSkills = (internship.requirements || []).some(req =>
         skillList.some(skill => req.toLowerCase().includes(skill.toLowerCase()) ||
-                  skill.toLowerCase().includes(req.toLowerCase()))
+          skill.toLowerCase().includes(req.toLowerCase()))
       );
     }
 
@@ -216,7 +199,7 @@ const FindInternshipsPageClient = () => {
       const majorList = majorFilter.split(',').map(m => m.trim().toLowerCase());
       matchesMajor = (internship.requirements || []).some(req =>
         majorList.some(major => req.toLowerCase().includes(major.toLowerCase()) ||
-                  major.toLowerCase().includes(req.toLowerCase()))
+          major.toLowerCase().includes(req.toLowerCase()))
       );
     }
 
@@ -307,13 +290,12 @@ const FindInternshipsPageClient = () => {
               <button
                 onClick={fetchInternships}
                 disabled={loading}
-                className={`flex items-center px-4 py-2 rounded-lg ${
-                  loading
+                className={`flex items-center px-4 py-2 rounded-lg ${loading
                     ? 'bg-gray-300 cursor-not-allowed'
                     : darkMode
                       ? 'bg-blue-600 hover:bg-blue-700'
                       : 'bg-blue-500 hover:bg-blue-600'
-                } text-white transition-colors`}
+                  } text-white transition-colors`}
               >
                 {loading ? (
                   <>
@@ -355,7 +337,7 @@ const FindInternshipsPageClient = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="location" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Lokasi</label>
                   <select
@@ -377,7 +359,7 @@ const FindInternshipsPageClient = () => {
                     <option value="Lainnya">Lainnya</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label htmlFor="type" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tipe</label>
                   <select
@@ -392,7 +374,7 @@ const FindInternshipsPageClient = () => {
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </div>
-                
+
                 {/* Additional Filters Row */}
                 <div className="md:col-span-2">
                   <label htmlFor="skills" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian</label>
@@ -476,9 +458,9 @@ const FindInternshipsPageClient = () => {
                             </span>
                           )}
                         </div>
-                        
+
                         <p className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{internship.company}</p>
-                        
+
                         <div className="flex flex-wrap gap-2 mt-3">
                           <span className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -492,8 +474,8 @@ const FindInternshipsPageClient = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                             {internship.type === 'wfo' ? 'WFO' :
-                             internship.type === 'wfh' ? 'WFH' :
-                             'Hybrid'}
+                              internship.type === 'wfh' ? 'WFH' :
+                                'Hybrid'}
                           </span>
                           <span className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,7 +484,7 @@ const FindInternshipsPageClient = () => {
                             {internship.duration}
                           </span>
                         </div>
-                        
+
                         <p className={`mt-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{internship.description}</p>
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -532,7 +514,7 @@ const FindInternshipsPageClient = () => {
                           <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Diposting: {internship.posted}</span>
                         </div>
                       </div>
-                      
+
                       <div className="ml-4 flex flex-col items-center">
                         <a href={`/dashboard-student/find-internships/${internship.id}`}>
                           <button
@@ -550,7 +532,7 @@ const FindInternshipsPageClient = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Persyaratan:</h4>
                       <ul className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -611,8 +593,8 @@ const FindInternshipsPageClient = () => {
                         <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tipe</h3>
                         <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           {selectedInternship.type === 'wfo' ? 'WFO (Work From Office)' :
-                           selectedInternship.type === 'wfh' ? 'WFH (Work From Home)' :
-                           'Hybrid'}
+                            selectedInternship.type === 'wfh' ? 'WFH (Work From Home)' :
+                              'Hybrid'}
                         </p>
                       </div>
                       <div>

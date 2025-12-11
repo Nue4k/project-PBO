@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/authContext';
+import { useTheme } from '../lib/ThemeContext';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 
@@ -20,7 +21,7 @@ type Activity = {
 };
 
 const DashboardPage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Move this to the top with other state declarations
   const { user, isLoading, token } = useAuth(); // Get the token as well
   const router = useRouter();
@@ -36,10 +37,6 @@ const DashboardPage = () => {
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [topJobs, setTopJobs] = useState<any[]>([]);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>([]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Redirect based on user role - this should be one of the first hooks
   useEffect(() => {
@@ -57,21 +54,6 @@ const DashboardPage = () => {
     }
   }, [user, isLoading, router]);
 
-  // Check system preference for dark mode
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  // Update the class on the document element
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
   // Fetch company profile
   useEffect(() => {

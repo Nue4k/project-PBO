@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { createInternship, getCompanyInternships } from '../../services/internshipService';
 
 type FormData = {
@@ -29,7 +30,7 @@ const CreateInternshipPage = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -48,25 +49,7 @@ const CreateInternshipPage = () => {
     salary: '',
   });
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -198,11 +181,10 @@ const CreateInternshipPage = () => {
                       value={formData.title}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                       placeholder="Contoh: Program Magang Pemasaran Digital"
                     />
                   </div>
@@ -217,11 +199,10 @@ const CreateInternshipPage = () => {
                       value={formData.jobType}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                     >
                       <option value="wfo">WFO (Work From Office)</option>
                       <option value="wfh">WFH (Work From Home)</option>
@@ -238,11 +219,10 @@ const CreateInternshipPage = () => {
                       name="location"
                       value={formData.location}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                     >
                       <option value="">Pilih Lokasi</option>
                       <option value="Jakarta">Jakarta</option>
@@ -269,11 +249,10 @@ const CreateInternshipPage = () => {
                       value={formData.closingDate}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                     />
                   </div>
 
@@ -289,11 +268,10 @@ const CreateInternshipPage = () => {
                       onChange={handleInputChange}
                       required
                       min="1"
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                       placeholder="Contoh: 3, 6"
                     />
                   </div>
@@ -304,11 +282,10 @@ const CreateInternshipPage = () => {
                     </label>
                     <div className="flex space-x-4">
                       <label
-                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
-                          !formData.isPaid
+                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${!formData.isPaid
                             ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
                             : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
-                        }`}
+                          }`}
                       >
                         <input
                           type="radio"
@@ -320,11 +297,10 @@ const CreateInternshipPage = () => {
                         <span className="mx-auto font-medium">Unpaid</span>
                       </label>
                       <label
-                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
-                          formData.isPaid
+                        className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${formData.isPaid
                             ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
                             : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
-                        }`}
+                          }`}
                       >
                         <input
                           type="radio"
@@ -350,11 +326,10 @@ const CreateInternshipPage = () => {
                     onChange={handleInputChange}
                     required
                     rows={5}
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                      }`}
                     placeholder="Jelaskan tentang program magang, tanggung jawab utama, dan pengalaman yang akan didapatkan oleh peserta magang..."
                   ></textarea>
                 </div>
@@ -373,11 +348,10 @@ const CreateInternshipPage = () => {
                         value={formData.salary}
                         onChange={handleInputChange}
                         required={formData.isPaid}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          darkMode
+                        className={`w-full px-4 py-3 rounded-lg border ${darkMode
                             ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        }`}
+                          }`}
                         placeholder="Contoh: 1.500.000 IDR per bulan"
                       />
                       <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -391,7 +365,7 @@ const CreateInternshipPage = () => {
                   <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     Persyaratan <span className="text-red-500">*</span>
                   </h3>
-                  
+
                   {/* Majors Field */}
                   <div className="mb-4">
                     <label className={`block mb-2 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -399,11 +373,10 @@ const CreateInternshipPage = () => {
                     </label>
                     <select
                       id="majorInput"
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                       value=""
                       onChange={(e) => {
                         if (e.target.value && !formData.requirements.majors.includes(e.target.value)) {
@@ -432,9 +405,8 @@ const CreateInternshipPage = () => {
                       {formData.requirements.majors.map((major, index) => (
                         <div
                           key={index}
-                          className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                            darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                          }`}
+                          className={`flex items-center px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                            }`}
                         >
                           {major}
                           <button
@@ -458,11 +430,10 @@ const CreateInternshipPage = () => {
                       <input
                         type="text"
                         id="skillInput"
-                        className={`flex-1 px-4 py-3 rounded-l-lg border ${
-                          darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                        className={`flex-1 px-4 py-3 rounded-l-lg border ${darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        }`}
+                          }`}
                         placeholder="Tambahkan keterampilan (misal: JavaScript, Desain Grafis)"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
@@ -486,14 +457,13 @@ const CreateInternshipPage = () => {
                         Tambah
                       </button>
                     </div>
-                    
+
                     <div className="mt-2 flex flex-wrap gap-2">
                       {formData.requirements.skills.map((skill, index) => (
-                        <div 
-                          key={index} 
-                          className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                            darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                          }`}
+                        <div
+                          key={index}
+                          className={`flex items-center px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                            }`}
                         >
                           {skill}
                           <button
@@ -521,11 +491,10 @@ const CreateInternshipPage = () => {
                       max="4"
                       value={formData.requirements.gpa}
                       onChange={(e) => handleRequirementsChange('gpa', e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                       placeholder="Contoh: 3.0"
                     />
                   </div>
@@ -539,11 +508,10 @@ const CreateInternshipPage = () => {
                       id="minSemester"
                       value={formData.requirements.minSemester}
                       onChange={(e) => handleRequirementsChange('minSemester', e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
                           ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                     >
                       <option value="">Pilih Minimal Semester</option>
                       <option value="1">Semester 1</option>
@@ -567,11 +535,10 @@ const CreateInternshipPage = () => {
                       value={formData.requirements.other}
                       onChange={(e) => handleRequirementsChange('other', e.target.value)}
                       rows={3}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]' 
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                        }`}
                       placeholder="Tambahkan persyaratan tambahan lainnya..."
                     ></textarea>
                   </div>
@@ -581,11 +548,10 @@ const CreateInternshipPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowConfirmDialog(true)}
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      darkMode
+                    className={`px-6 py-3 rounded-lg font-medium ${darkMode
                         ? 'bg-gray-700 text-white hover:bg-gray-600'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                      }`}
                   >
                     Batal
                   </button>
@@ -616,11 +582,10 @@ const CreateInternshipPage = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmDialog(false)}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  darkMode
+                className={`px-4 py-2 rounded-lg font-medium ${darkMode
                     ? 'bg-gray-700 text-white hover:bg-gray-600'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                  }`}
               >
                 Batal
               </button>
@@ -650,11 +615,10 @@ const CreateInternshipPage = () => {
               <button
                 type="button"
                 onClick={() => setShowSubmitConfirmDialog(false)}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  darkMode
+                className={`px-4 py-2 rounded-lg font-medium ${darkMode
                     ? 'bg-gray-700 text-white hover:bg-gray-600'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                  }`}
               >
                 Batal
               </button>
@@ -764,11 +728,10 @@ const CreateInternshipPage = () => {
                     // Redirect to manage internships page after success
                     router.push('/dashboard/manage-internships');
                   }}
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    darkMode
+                  className={`px-4 py-2 rounded-lg font-medium ${darkMode
                       ? 'bg-[#f59e0b] text-white hover:bg-[#d97706]'
                       : 'bg-[#f59e0b] text-white hover:bg-[#d97706]'
-                  }`}
+                    }`}
                 >
                   Lihat Program Saya
                 </button>

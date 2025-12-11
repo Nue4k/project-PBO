@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { getStudentProfile } from '../../lib/apiService';
 import { getStudentApplications } from '../../services/internshipService';
 import Sidebar from '../../components/Sidebar';
@@ -27,35 +28,18 @@ type Application = {
   attendance_confirmed?: boolean;
   attendance_confirmed_at?: string;
   attendance_confirmation_method?: string;
+  feedback_note?: string;
 };
 
 const MyApplicationsPage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'All'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [applications, setApplications] = useState<Application[]>([]);
   const { token } = useAuth();
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -113,7 +97,7 @@ const MyApplicationsPage = () => {
 
   // Function to get status color classes
   const getStatusColor = (status: ApplicationStatus) => {
-    switch(status) {
+    switch (status) {
       case 'Applied':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
       case 'Reviewed':
@@ -137,7 +121,7 @@ const MyApplicationsPage = () => {
 
   // Function to get status message based on status for simplified workflow
   const getStatusMessage = (status: ApplicationStatus) => {
-    switch(status) {
+    switch (status) {
       case 'Applied':
         return 'Lamaran telah dikirim, dalam proses review';
       case 'Reviewed':
@@ -310,7 +294,7 @@ const MyApplicationsPage = () => {
                     Ditolak
                   </button>
                 </div>
-                
+
                 <div className="relative">
                   <input
                     type="text"
@@ -348,12 +332,11 @@ const MyApplicationsPage = () => {
                 filteredApplications.map(app => (
                   <div
                     key={app.id}
-                    className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'} border-l-4 ${
-                      getDisplayStatus(app.status) === 'Submitted' ? 'border-blue-500' :
+                    className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'} border-l-4 ${getDisplayStatus(app.status) === 'Applied' ? 'border-blue-500' :
                       getDisplayStatus(app.status) === 'Reviewed' ? 'border-yellow-500' :
-                      getDisplayStatus(app.status) === 'Interview' ? 'border-purple-500' :
-                      getDisplayStatus(app.status) === 'Accepted' ? 'border-green-500' : 'border-red-500'
-                    }`}
+                        getDisplayStatus(app.status) === 'Interview' ? 'border-purple-500' :
+                          getDisplayStatus(app.status) === 'Accepted' ? 'border-green-500' : 'border-red-500'
+                      }`}
                   >
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                       <div className="flex-1">
@@ -399,13 +382,12 @@ const MyApplicationsPage = () => {
                         </div>
 
                         {getStatusMessage(getDisplayStatus(app.status)) && (
-                          <div className={`mt-3 p-3 rounded-lg ${
-                            getDisplayStatus(app.status) === 'Accepted'
-                              ? `${darkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`
-                              : getDisplayStatus(app.status) === 'Rejected'
-                                ? `${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border`
-                                : `${darkMode ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} border`
-                          }`}>
+                          <div className={`mt-3 p-3 rounded-lg ${getDisplayStatus(app.status) === 'Accepted'
+                            ? `${darkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`
+                            : getDisplayStatus(app.status) === 'Rejected'
+                              ? `${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border`
+                              : `${darkMode ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} border`
+                            }`}>
                             <p className={`text-sm ${getDisplayStatus(app.status) === 'Accepted' ? 'text-green-600 dark:text-green-400' : getDisplayStatus(app.status) === 'Rejected' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
                               {getStatusMessage(getDisplayStatus(app.status))}
                             </p>
@@ -547,11 +529,11 @@ const MyApplicationsPage = () => {
                             setApplications(prev => prev.map(app =>
                               app.id === selectedApplication.id
                                 ? {
-                                    ...app,
-                                    attendance_confirmed: true,
-                                    attendance_confirmed_at: new Date().toISOString(),
-                                    attendance_confirmation_method: 'system'
-                                  }
+                                  ...app,
+                                  attendance_confirmed: true,
+                                  attendance_confirmed_at: new Date().toISOString(),
+                                  attendance_confirmation_method: 'system'
+                                }
                                 : app
                             ));
 
@@ -649,20 +631,18 @@ const MyApplicationsPage = () => {
 
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 className={`font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status Lamaran</h4>
-                    <div className={`p-3 rounded-lg ${
-                      selectedDetailApplication.status === 'Accepted'
-                        ? `${darkMode ? 'bg-green-900/30 border border-green-800' : 'bg-green-100 border border-green-200'}`
-                        : selectedDetailApplication.status === 'Rejected'
-                          ? `${darkMode ? 'bg-red-900/30 border border-red-800' : 'bg-red-100 border border-red-200'}`
-                          : `${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`
-                    }`}>
-                      <p className={`text-sm ${
-                        getDisplayStatus(selectedDetailApplication.status) === 'Accepted'
-                          ? `${darkMode ? 'text-green-400' : 'text-green-700'} font-semibold`
-                          : getDisplayStatus(selectedDetailApplication.status) === 'Rejected'
-                            ? `${darkMode ? 'text-red-400' : 'text-red-700'} font-semibold`
-                            : `${darkMode ? 'text-gray-300' : 'text-gray-700'}`
+                    <div className={`p-3 rounded-lg ${selectedDetailApplication.status === 'Accepted'
+                      ? `${darkMode ? 'bg-green-900/30 border border-green-800' : 'bg-green-100 border border-green-200'}`
+                      : selectedDetailApplication.status === 'Rejected'
+                        ? `${darkMode ? 'bg-red-900/30 border border-red-800' : 'bg-red-100 border border-red-200'}`
+                        : `${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`
                       }`}>
+                      <p className={`text-sm ${getDisplayStatus(selectedDetailApplication.status) === 'Accepted'
+                        ? `${darkMode ? 'text-green-400' : 'text-green-700'} font-semibold`
+                        : getDisplayStatus(selectedDetailApplication.status) === 'Rejected'
+                          ? `${darkMode ? 'text-red-400' : 'text-red-700'} font-semibold`
+                          : `${darkMode ? 'text-gray-300' : 'text-gray-700'}`
+                        }`}>
                         Status: {getDisplayStatus(selectedDetailApplication.status)}
                       </p>
                       <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tanggal Lamar: {selectedDetailApplication.appliedDate}</p>

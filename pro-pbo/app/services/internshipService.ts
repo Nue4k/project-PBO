@@ -1,6 +1,6 @@
 // app/services/internshipService.ts
 // Legacy internship service file - kept for backward compatibility during transition
-// Will be replaced by individual service classes in the services directory
+// Will be replaced by individual service classes in the services directory - REFRESHED
 
 import { CompanyProfileService } from './profile/ProfileService';
 import { InternshipService, ApplicationService, DocumentService } from './internship/InternshipService';

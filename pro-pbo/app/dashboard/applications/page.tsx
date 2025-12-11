@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { setInterviewSchedule, updateApplicationStatus } from '../../services/internshipService';
 
 type ApplicationStatus = 'Applied' | 'Reviewed' | 'Interview' | 'Accepted' | 'Rejected';
@@ -35,14 +36,14 @@ type Application = {
   company?: string;
   position?: string;
   deadline?: string;
-  interview_date?: string;
-  interview_time?: string;
-  interview_method?: string;
-  interview_location?: string;
-  interview_notes?: string;
+  interview_date?: string | null;
+  interview_time?: string | null;
+  interview_method?: string | null;
+  interview_location?: string | null;
+  interview_notes?: string | null;
   attendance_confirmed?: boolean;
-  attendance_confirmed_at?: string;
-  attendance_confirmation_method?: string;
+  attendance_confirmed_at?: string | null;
+  attendance_confirmation_method?: string | null;
   resume_id?: string; // ID of the resume document used in this application
   resume_name?: string; // Name of the resume document
   resume_type?: string; // Type of the resume document
@@ -51,7 +52,7 @@ type Application = {
 };
 
 const CompanyApplicationsPage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'All'>('All');
@@ -61,7 +62,7 @@ const CompanyApplicationsPage = () => {
   const [showApplicantProfile, setShowApplicantProfile] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState<Application | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<{id: string, status: ApplicationStatus} | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<{ id: string, status: ApplicationStatus } | null>(null);
   const [showInterviewScheduleModal, setShowInterviewScheduleModal] = useState(false);
   const [localApplicationOverrides, setLocalApplicationOverrides] = useState<Record<string, Partial<Application>>>({});
   const [interviewScheduledApplications, setInterviewScheduledApplications] = useState<Set<string>>(new Set());
@@ -112,25 +113,7 @@ const CompanyApplicationsPage = () => {
     }
   }, [token]);
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -220,7 +203,7 @@ const CompanyApplicationsPage = () => {
 
           // Apply local overrides to server data
           setApplications(prev => {
-            return serverApplications.map(serverApp => {
+            return serverApplications.map((serverApp: Application) => {
               // Check if there's a local override for this application
               const localOverride = localApplicationOverrides[serverApp.id];
               if (localOverride) {
@@ -264,7 +247,7 @@ const CompanyApplicationsPage = () => {
 
   // Function to get status color classes
   const getStatusColor = (status: ApplicationStatus) => {
-    switch(status) {
+    switch (status) {
       case 'Applied':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
       case 'Accepted':
@@ -284,7 +267,7 @@ const CompanyApplicationsPage = () => {
 
   // Function to get status action text for simplified workflow
   const getStatusAction = (status: ApplicationStatus, hasInterviewScheduled?: boolean, appId?: string) => {
-    switch(status) {
+    switch (status) {
       case 'Applied':
         return 'Review';
       case 'Reviewed':
@@ -356,12 +339,12 @@ const CompanyApplicationsPage = () => {
       const { id } = selectedApplication;
 
       try {
-        const result = await setInterviewSchedule(token, id, {
-          interview_date: interviewSchedule.date,
-          interview_time: interviewSchedule.time,
-          interview_method: interviewSchedule.method,
-          interview_location: interviewSchedule.method === 'offline' ? interviewSchedule.location : null,
-          interview_notes: interviewSchedule.notes,
+        const result = await (setInterviewSchedule as any)(token, id, {
+          date: interviewSchedule.date,
+          time: interviewSchedule.time,
+          method: interviewSchedule.method,
+          location: interviewSchedule.location,
+          notes: interviewSchedule.notes
         });
 
         console.log('Interview schedule result:', result);
@@ -371,18 +354,18 @@ const CompanyApplicationsPage = () => {
           const updatedApplications = prev.map(app =>
             app.id === id
               ? {
-                  ...app,
-                  status: 'Interview',
-                  statusDate: new Date().toISOString().split('T')[0],
-                  interview_date: result?.interview_date || interviewSchedule.date,
-                  interview_time: result?.interview_time || interviewSchedule.time,
-                  interview_method: result?.interview_method || interviewSchedule.method,
-                  interview_location: result?.interview_location || (interviewSchedule.method === 'offline' ? interviewSchedule.location : null),
-                  interview_notes: result?.interview_notes || interviewSchedule.notes,
-                  attendance_confirmed: app.attendance_confirmed || false,
-                  attendance_confirmed_at: app.attendance_confirmed_at || null,
-                  attendance_confirmation_method: app.attendance_confirmation_method || null,
-                }
+                ...app,
+                status: 'Interview' as ApplicationStatus,
+                statusDate: new Date().toISOString().split('T')[0],
+                interview_date: result?.interview_date || interviewSchedule.date,
+                interview_time: result?.interview_time || interviewSchedule.time,
+                interview_method: result?.interview_method || interviewSchedule.method,
+                interview_location: result?.interview_location || (interviewSchedule.method === 'offline' ? interviewSchedule.location : null),
+                interview_notes: result?.interview_notes || interviewSchedule.notes,
+                attendance_confirmed: app.attendance_confirmed || false,
+                attendance_confirmed_at: app.attendance_confirmed_at || null,
+                attendance_confirmation_method: app.attendance_confirmation_method || null,
+              }
               : app
           );
 
@@ -405,7 +388,7 @@ const CompanyApplicationsPage = () => {
         setLocalApplicationOverrides(prev => ({
           ...prev,
           [id]: {
-            status: 'Interview',
+            status: 'Interview' as ApplicationStatus,
             statusDate: new Date().toISOString().split('T')[0],
             interview_date: result?.interview_date || interviewSchedule.date,
             interview_time: result?.interview_time || interviewSchedule.time,
@@ -484,7 +467,7 @@ const CompanyApplicationsPage = () => {
                 }));
 
                 // Apply local overrides to the fresh data
-                const applicationsWithOverrides = freshApplications.map(app => {
+                const applicationsWithOverrides = freshApplications.map((app: Application) => {
                   const localOverride = localApplicationOverrides[app.id];
                   if (localOverride) {
                     return { ...app, ...localOverride };
@@ -617,7 +600,7 @@ const CompanyApplicationsPage = () => {
                 }));
 
                 // Apply local overrides to the fresh data
-                const applicationsWithOverrides = freshApplications.map(app => {
+                const applicationsWithOverrides = freshApplications.map((app: Application) => {
                   const localOverride = localApplicationOverrides[app.id];
                   if (localOverride) {
                     return { ...app, ...localOverride };
@@ -815,15 +798,14 @@ const CompanyApplicationsPage = () => {
                 filteredApplications.map(app => (
                   <div
                     key={app.id}
-                    className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'} border-l-4 ${
-                      getDisplayStatus(app.status) === 'Applied' ? 'border-blue-500' :
+                    className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'} border-l-4 ${getDisplayStatus(app.status) === 'Applied' ? 'border-blue-500' :
                       getDisplayStatus(app.status) === 'Accepted' ? 'border-green-500' : 'border-red-500'
-                    }`}
+                      }`}
                   >
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                       <div className="flex-1">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
-                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{app.title}</h3>
+                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{app.job_title}</h3>
                           <div className="flex items-center gap-2">
                             <span className={`px-3 py-1 rounded-full text-sm font-medium mt-1 md:mt-0 ${getStatusColor(getDisplayStatus(app.status))}`}>
                               {getDisplayStatus(app.status)}
@@ -841,19 +823,18 @@ const CompanyApplicationsPage = () => {
                             </p>
                           </div>
 
-                          <div className={`text-sm p-3 rounded-lg mt-2 md:mt-0 ${
-                            app.status === 'Applied'
-                              ? `${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'} border`
-                              : app.status === 'Reviewed'
-                                ? `${darkMode ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} border`
-                                : getDisplayStatus(app.status) === 'Interview'
-                                  ? `${darkMode ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'} border`
-                                  : app.status === 'Accepted'
-                                    ? `${darkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`
-                                    : `${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border`
-                          }`}>
+                          <div className={`text-sm p-3 rounded-lg mt-2 md:mt-0 ${app.status === 'Applied'
+                            ? `${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'} border`
+                            : app.status === 'Reviewed'
+                              ? `${darkMode ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'} border`
+                              : getDisplayStatus(app.status) === 'Interview'
+                                ? `${darkMode ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'} border`
+                                : app.status === 'Accepted'
+                                  ? `${darkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`
+                                  : `${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border`
+                            }`}>
                             <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                              <span className="font-medium">Dilamar:</span> {app.appliedDate} •
+                              <span className="font-medium">Dilamar:</span> {app.applied_date} •
                               <span className="font-medium"> Status:</span> {app.statusDate}
                             </p>
                             {app.attendance_confirmed && (
@@ -869,7 +850,7 @@ const CompanyApplicationsPage = () => {
                         <div className="mb-3">
                           <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian Mahasiswa:</h4>
                           <div className="flex flex-wrap gap-2">
-                            {app.studentSkills.map((skill, index) => (
+                            {(app.studentSkills || []).map((skill, index) => (
                               <span
                                 key={index}
                                 className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}
@@ -881,7 +862,7 @@ const CompanyApplicationsPage = () => {
                         </div>
 
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {app.requirements.map((req, index) => (
+                          {(app.requirements || []).map((req, index) => (
                             <span
                               key={index}
                               className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
@@ -898,7 +879,7 @@ const CompanyApplicationsPage = () => {
                           </div>
                           <div>
                             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tanggal Lamar</p>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{app.appliedDate}</p>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{app.applied_date}</p>
                           </div>
                           <div>
                             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Batas Waktu</p>
@@ -912,7 +893,7 @@ const CompanyApplicationsPage = () => {
                       </div>
 
                       <div className="ml-0 md:ml-4 mt-4 md:mt-0 flex flex-col space-y-2">
-                                                <div className="flex flex-wrap gap-2 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
                           {/* Show Accept/Reject buttons only for applications that are not yet accepted or rejected */}
                           {getDisplayStatus(app.status) !== 'Accepted' && getDisplayStatus(app.status) !== 'Rejected' ? (
                             <>
@@ -1088,7 +1069,7 @@ const CompanyApplicationsPage = () => {
                       <div className="mb-4">
                         <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keahlian</h4>
                         <div className="flex flex-wrap gap-2">
-                          {selectedApplicant.studentSkills.map((skill, index) => (
+                          {(selectedApplicant.studentSkills || []).map((skill, index) => (
                             <span
                               key={index}
                               className={`px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}
@@ -1287,9 +1268,8 @@ const CompanyApplicationsPage = () => {
                             name="date"
                             value={interviewSchedule.date || ''}
                             onChange={handleScheduleChange}
-                            className={`w-full px-4 py-2 rounded-lg border ${
-                              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                             required
                           />
                         </div>
@@ -1301,9 +1281,8 @@ const CompanyApplicationsPage = () => {
                             name="time"
                             value={interviewSchedule.time || ''}
                             onChange={handleScheduleChange}
-                            className={`w-full px-4 py-2 rounded-lg border ${
-                              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                             required
                           />
                         </div>
@@ -1314,9 +1293,8 @@ const CompanyApplicationsPage = () => {
                             name="method"
                             value={interviewSchedule.method || 'online'}
                             onChange={handleScheduleChange}
-                            className={`w-full px-4 py-2 rounded-lg border ${
-                              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                           >
                             <option value="online">Online (Video Conference)</option>
                             <option value="offline">Offline (Datang ke Kantor)</option>
@@ -1332,9 +1310,8 @@ const CompanyApplicationsPage = () => {
                               value={interviewSchedule.location || ''}
                               onChange={handleScheduleChange}
                               placeholder="Alamat lengkap kantor"
-                              className={`w-full px-4 py-2 rounded-lg border ${
-                                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-                              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                             />
                           </div>
                         )}
@@ -1348,9 +1325,8 @@ const CompanyApplicationsPage = () => {
                           onChange={handleScheduleChange}
                           placeholder="Catatan tambahan untuk pelamar..."
                           rows={3}
-                          className={`w-full px-4 py-2 rounded-lg border ${
-                            darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         ></textarea>
                       </div>
 
@@ -1367,20 +1343,18 @@ const CompanyApplicationsPage = () => {
                               notes: prev.notes || ''
                             }));
                           }}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            darkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                          }`}
+                          className={`px-4 py-2 rounded-lg font-medium ${darkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                            }`}
                         >
                           Batal
                         </button>
                         <button
                           onClick={handleScheduleInterview}
                           disabled={!interviewSchedule.date || !interviewSchedule.time}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            (!interviewSchedule.date || !interviewSchedule.time)
-                              ? `${darkMode ? 'bg-gray-700 cursor-not-allowed' : 'bg-gray-300 cursor-not-allowed'} text-gray-500`
-                              : `${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`
-                          }`}
+                          className={`px-4 py-2 rounded-lg font-medium ${(!interviewSchedule.date || !interviewSchedule.time)
+                            ? `${darkMode ? 'bg-gray-700 cursor-not-allowed' : 'bg-gray-300 cursor-not-allowed'} text-gray-500`
+                            : `${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`
+                            }`}
                         >
                           Jadwalkan Wawancara
                         </button>
@@ -1484,17 +1458,15 @@ const CompanyApplicationsPage = () => {
                         <div className="flex flex-col sm:flex-row gap-3">
                           <button
                             onClick={() => handleReviewDecision('interview')}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium ${
-                              darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-                            }`}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                              }`}
                           >
                             Lanjut ke Wawancara
                           </button>
                           <button
                             onClick={() => handleReviewDecision('reject')}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium ${
-                              darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
-                            }`}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium ${darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                              }`}
                           >
                             Tidak Lanjut
                           </button>

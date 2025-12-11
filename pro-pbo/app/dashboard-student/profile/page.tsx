@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
+import { useRouter } from 'next/navigation';
 import { StudentProfile, UpdateStudentProfileRequest } from '../../interfaces';
 import { updateStudentProfile, getStudentProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
@@ -18,7 +20,10 @@ type FormErrors = {
 };
 
 const ManageStudentProfilePage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { user, token, login, isLoading } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
+  const router = useRouter();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -27,64 +32,42 @@ const ManageStudentProfilePage = () => {
 
   // Temporary state untuk form edit, terpisah dari state profil utama
   const [tempProfile, setTempProfile] = useState<StudentProfile | null>(null);
+  const [newSkill, setNewSkill] = useState('');
+  const [newInterest, setNewInterest] = useState('');
 
+  // Check authentication
   useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
+    if (!isLoading && !user) {
+      router.push('/login-student');
     }
-  }, []);
-
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const { user, token, login } = useAuth(); // Get user, token, and login function from context
+  }, [user, isLoading, router]);
 
   // Load profile data when component mounts
   useEffect(() => {
     const loadProfile = async () => {
-      console.log('Token value:', token);
-      console.log('Full token (first 20 chars):', token ? token.substring(0, 20) + '...' : null);
-
       if (token) {
         try {
-          console.log('Attempting to fetch profile...');
           const profileData = await getStudentProfile(token);
-          console.log('Profile data fetched:', profileData);
           setProfile(profileData);
         } catch (error: any) {
           console.error('Error fetching profile:', error);
-
-          // Tampilkan informasi error yang lebih spesifik
           let errorMessage = 'Gagal memuat profil. Silakan coba lagi nanti.';
           if (error.message) {
             errorMessage += ` (${error.message})`;
           }
-          console.error('Detailed error message:', errorMessage);
-
-          // Tetap set loading ke false meskipun ada error
           alert(errorMessage);
         } finally {
           setLoading(false);
         }
-      } else {
-        console.log('No token available');
+      } else if (!isLoading) {
         setLoading(false);
       }
     };
 
-    loadProfile();
-  }, [token]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
+    if (user) {
+      loadProfile();
+    }
+  }, [token, user, isLoading]);
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -114,9 +97,6 @@ const ManageStudentProfilePage = () => {
       return prev;
     });
   };
-
-  const [newSkill, setNewSkill] = useState('');
-  const [newInterest, setNewInterest] = useState('');
 
   const addSkill = () => {
     if (newSkill.trim() && tempProfile && !tempProfile.skills.includes(newSkill.trim())) {
@@ -399,451 +379,451 @@ const ManageStudentProfilePage = () => {
                 </div>
               ) : profile ? (
                 <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  {/* Profile Avatar */}
-                  <div className="md:col-span-2 flex flex-col items-center">
-                    <div className={`w-32 h-32 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center mb-4`}>
-                      {profile.avatar ? (
-                        <img src={profile.avatar} alt="Profile Avatar" className="w-full h-full object-contain rounded-full" />
-                      ) : (
-                        <span className={`text-4xl ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>👤</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Profile Avatar */}
+                    <div className="md:col-span-2 flex flex-col items-center">
+                      <div className={`w-32 h-32 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center mb-4`}>
+                        {profile.avatar ? (
+                          <img src={profile.avatar} alt="Profile Avatar" className="w-full h-full object-contain rounded-full" />
+                        ) : (
+                          <span className={`text-4xl ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>👤</span>
+                        )}
+                      </div>
+                      {isEditing && (
+                        <label className={`px-4 py-2 rounded-lg cursor-pointer ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}>
+                          Ganti Avatar
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                const file = e.target.files[0];
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setProfile(prev => ({
+                                    ...prev,
+                                    avatar: reader.result as string
+                                  }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
                       )}
                     </div>
-                    {isEditing && (
-                      <label className={`px-4 py-2 rounded-lg cursor-pointer ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}>
-                        Ganti Avatar
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*" 
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              const file = e.target.files[0];
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setProfile(prev => ({
-                                  ...prev,
-                                  avatar: reader.result as string
-                                }));
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
+
+                    {/* Name */}
+                    <div>
+                      <label htmlFor="name" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Nama Lengkap
                       </label>
-                    )}
-                  </div>
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={tempProfile?.name || ''}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 py-2 rounded-lg border ${errors.name ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          />
+                          {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                        </>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile?.name}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Name */}
-                  <div>
-                    <label htmlFor="name" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Nama Lengkap
-                    </label>
-                    {isEditing ? (
-                      <>
+                    {/* Email */}
+                    <div>
+                      <label htmlFor="email" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Email
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={tempProfile?.email || ''}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 py-2 rounded-lg border ${errors.email ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          />
+                          {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                        </>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile?.email}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* University */}
+                    <div>
+                      <label htmlFor="university" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Universitas
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <select
+                            id="university"
+                            name="university"
+                            value={tempProfile?.university || ''}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 py-2 rounded-lg border ${errors.university ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          >
+                            <option value="">Pilih Universitas</option>
+                            {universities.map((univ, index) => (
+                              <option key={index} value={univ}>{univ}</option>
+                            ))}
+                          </select>
+                          {errors.university && <p className="mt-1 text-sm text-red-500">{errors.university}</p>}
+                        </>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile.university}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Major */}
+                    <div>
+                      <label htmlFor="major" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Jurusan
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <select
+                            id="major"
+                            name="major"
+                            value={tempProfile?.major || ''}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 py-2 rounded-lg border ${errors.major ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          >
+                            <option value="">Pilih Jurusan</option>
+                            {majors.map((major, index) => (
+                              <option key={index} value={major}>{major}</option>
+                            ))}
+                          </select>
+                          {errors.major && <p className="mt-1 text-sm text-red-500">{errors.major}</p>}
+                        </>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile.major}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Location */}
+                    <div>
+                      <label htmlFor="location" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Lokasi
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <select
+                            id="location"
+                            name="location"
+                            value={tempProfile?.location || ''}
+                            onChange={handleInputChange}
+                            className={`w-full px-3 py-2 rounded-lg border ${errors.location ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          >
+                            <option value="">Pilih Lokasi</option>
+                            {locations.map((loc, index) => (
+                              <option key={index} value={loc}>{loc}</option>
+                            ))}
+                          </select>
+                          {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
+                        </>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile.location}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Portfolio */}
+                    <div>
+                      <label htmlFor="portfolio" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Portfolio
+                      </label>
+                      {isEditing ? (
                         <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={tempProfile?.name || ''}
+                          type="url"
+                          id="portfolio"
+                          name="portfolio"
+                          value={tempProfile?.portfolio || ''}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${errors.name ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
-                        {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-                      </>
-                    ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile?.name}
-                      </div>
-                    )}
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          {profile.portfolio ? (
+                            <a href={profile.portfolio} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                              {profile.portfolio}
+                            </a>
+                          ) : (
+                            'Tidak ada portfolio'
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Skills */}
+                    <div>
+                      <label htmlFor="skills" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Keahlian
+                      </label>
+                      {isEditing ? (
+                        <div>
+                          <div className="flex mb-2">
+                            <input
+                              type="text"
+                              id="newSkill"
+                              value={newSkill}
+                              onChange={(e) => setNewSkill(e.target.value)}
+                              placeholder="Tambah keahlian baru"
+                              className={`flex-1 px-3 py-2 rounded-l-lg border ${errors.skills ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addSkill();
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={addSkill}
+                              className={`px-4 py-2 rounded-r-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                            >
+                              Tambah
+                            </button>
+                          </div>
+                          {errors.skills && <p className="mt-1 text-sm text-red-500">{errors.skills}</p>}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {tempProfile?.skills.map((skill, index) => (
+                              <span
+                                key={index}
+                                className={`px-2 py-1 rounded text-sm flex items-center ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
+                              >
+                                {skill}
+                                <button
+                                  type="button"
+                                  onClick={() => removeSkill(skill)}
+                                  className="ml-2 text-white bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                >
+                                  &times;
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.skills.map((skill, index) => (
+                              <span
+                                key={index}
+                                className={`px-2 py-1 rounded text-sm ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Interests */}
+                    <div>
+                      <label htmlFor="interests" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Minat
+                      </label>
+                      {isEditing ? (
+                        <div>
+                          <div className="flex mb-2">
+                            <input
+                              type="text"
+                              id="newInterest"
+                              value={newInterest}
+                              onChange={(e) => setNewInterest(e.target.value)}
+                              placeholder="Tambah minat baru"
+                              className={`flex-1 px-3 py-2 rounded-l-lg border ${errors.interests ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addInterest();
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={addInterest}
+                              className={`px-4 py-2 rounded-r-lg ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white`}
+                            >
+                              Tambah
+                            </button>
+                          </div>
+                          {errors.interests && <p className="mt-1 text-sm text-red-500">{errors.interests}</p>}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {tempProfile?.interests.map((interest, index) => (
+                              <span
+                                key={index}
+                                className={`px-2 py-1 rounded text-sm flex items-center ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
+                              >
+                                {interest}
+                                <button
+                                  type="button"
+                                  onClick={() => removeInterest(interest)}
+                                  className="ml-2 text-white bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                >
+                                  &times;
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.interests.map((interest, index) => (
+                              <span
+                                key={index}
+                                className={`px-2 py-1 rounded text-sm ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
+                              >
+                                {interest}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Email */}
+                  {/* Resume */}
                   <div>
-                    <label htmlFor="email" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Email
-                    </label>
-                    {isEditing ? (
-                      <>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={tempProfile?.email || ''}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${errors.email ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        />
-                        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-                      </>
-                    ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile?.email}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* University */}
-                  <div>
-                    <label htmlFor="university" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Universitas
-                    </label>
-                    {isEditing ? (
-                      <>
-                        <select
-                          id="university"
-                          name="university"
-                          value={tempProfile?.university || ''}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${errors.university ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        >
-                          <option value="">Pilih Universitas</option>
-                          {universities.map((univ, index) => (
-                            <option key={index} value={univ}>{univ}</option>
-                          ))}
-                        </select>
-                        {errors.university && <p className="mt-1 text-sm text-red-500">{errors.university}</p>}
-                      </>
-                    ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.university}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Major */}
-                  <div>
-                    <label htmlFor="major" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Jurusan
-                    </label>
-                    {isEditing ? (
-                      <>
-                        <select
-                          id="major"
-                          name="major"
-                          value={tempProfile?.major || ''}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${errors.major ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        >
-                          <option value="">Pilih Jurusan</option>
-                          {majors.map((major, index) => (
-                            <option key={index} value={major}>{major}</option>
-                          ))}
-                        </select>
-                        {errors.major && <p className="mt-1 text-sm text-red-500">{errors.major}</p>}
-                      </>
-                    ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.major}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Location */}
-                  <div>
-                    <label htmlFor="location" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Lokasi
-                    </label>
-                    {isEditing ? (
-                      <>
-                        <select
-                          id="location"
-                          name="location"
-                          value={tempProfile?.location || ''}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${errors.location ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        >
-                          <option value="">Pilih Lokasi</option>
-                          {locations.map((loc, index) => (
-                            <option key={index} value={loc}>{loc}</option>
-                          ))}
-                        </select>
-                        {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
-                      </>
-                    ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.location}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Portfolio */}
-                  <div>
-                    <label htmlFor="portfolio" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Portfolio
+                    <label htmlFor="resume" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Resume
                     </label>
                     {isEditing ? (
                       <input
                         type="url"
-                        id="portfolio"
-                        name="portfolio"
-                        value={tempProfile?.portfolio || ''}
+                        id="resume"
+                        name="resume"
+                        value={tempProfile?.resume || ''}
                         onChange={handleInputChange}
                         className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                       />
                     ) : (
                       <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        {profile.portfolio ? (
-                          <a href={profile.portfolio} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                            {profile.portfolio}
+                        {tempProfile?.resume ? (
+                          <a href={tempProfile.resume} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                            {tempProfile.resume}
                           </a>
                         ) : (
-                          'Tidak ada portfolio'
+                          'Tidak ada resume'
                         )}
                       </div>
                     )}
                   </div>
 
-                  {/* Skills */}
-                  <div>
-                    <label htmlFor="skills" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Keahlian
+                  {/* Experience */}
+                  <div className="mb-6">
+                    <label htmlFor="experience" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Pengalaman
                     </label>
                     {isEditing ? (
-                      <div>
-                        <div className="flex mb-2">
-                          <input
-                            type="text"
-                            id="newSkill"
-                            value={newSkill}
-                            onChange={(e) => setNewSkill(e.target.value)}
-                            placeholder="Tambah keahlian baru"
-                            className={`flex-1 px-3 py-2 rounded-l-lg border ${errors.skills ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addSkill();
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={addSkill}
-                            className={`px-4 py-2 rounded-r-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-                          >
-                            Tambah
-                          </button>
-                        </div>
-                        {errors.skills && <p className="mt-1 text-sm text-red-500">{errors.skills}</p>}
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {tempProfile?.skills.map((skill, index) => (
-                            <span
-                              key={index}
-                              className={`px-2 py-1 rounded text-sm flex items-center ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
-                            >
-                              {skill}
-                              <button
-                                type="button"
-                                onClick={() => removeSkill(skill)}
-                                className="ml-2 text-white bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                              >
-                                &times;
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                      <textarea
+                        id="experience"
+                        name="experience"
+                        value={tempProfile?.experience.join('\n') || ''}
+                        onChange={(e) => {
+                          const experience = e.target.value.split('\n').filter(exp => exp.trim() !== '');
+                          setTempProfile(prev => {
+                            if (prev) {
+                              return {
+                                ...prev,
+                                experience: experience
+                              };
+                            }
+                            return prev;
+                          });
+                        }}
+                        rows={3}
+                        className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      />
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.skills.map((skill, index) => (
-                            <span
-                              key={index}
-                              className={`px-2 py-1 rounded text-sm ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
-                            >
-                              {skill}
-                            </span>
+                      <div className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                        <ul className="list-disc pl-5">
+                          {profile.experience.map((exp, index) => (
+                            <li key={index}>{exp}</li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
                   </div>
 
-                  {/* Interests */}
-                  <div>
-                    <label htmlFor="interests" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Minat
+                  {/* Education */}
+                  <div className="mb-6">
+                    <label htmlFor="education" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Pendidikan
                     </label>
                     {isEditing ? (
-                      <div>
-                        <div className="flex mb-2">
-                          <input
-                            type="text"
-                            id="newInterest"
-                            value={newInterest}
-                            onChange={(e) => setNewInterest(e.target.value)}
-                            placeholder="Tambah minat baru"
-                            className={`flex-1 px-3 py-2 rounded-l-lg border ${errors.interests ? 'border-red-500' : ''} ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addInterest();
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={addInterest}
-                            className={`px-4 py-2 rounded-r-lg ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white`}
-                          >
-                            Tambah
-                          </button>
-                        </div>
-                        {errors.interests && <p className="mt-1 text-sm text-red-500">{errors.interests}</p>}
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {tempProfile?.interests.map((interest, index) => (
-                            <span
-                              key={index}
-                              className={`px-2 py-1 rounded text-sm flex items-center ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
-                            >
-                              {interest}
-                              <button
-                                type="button"
-                                onClick={() => removeInterest(interest)}
-                                className="ml-2 text-white bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                              >
-                                &times;
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                      <textarea
+                        id="education"
+                        name="education"
+                        value={tempProfile?.education.join('\n') || ''}
+                        onChange={(e) => {
+                          const education = e.target.value.split('\n').filter(edu => edu.trim() !== '');
+                          setTempProfile(prev => {
+                            if (prev) {
+                              return {
+                                ...prev,
+                                education: education
+                              };
+                            }
+                            return prev;
+                          });
+                        }}
+                        rows={3}
+                        className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      />
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.interests.map((interest, index) => (
-                            <span
-                              key={index}
-                              className={`px-2 py-1 rounded text-sm ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
-                            >
-                              {interest}
-                            </span>
+                      <div className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
+                        <ul className="list-disc pl-5">
+                          {profile.education.map((edu, index) => (
+                            <li key={index}>{edu}</li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Resume */}
-                <div>
-                  <label htmlFor="resume" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Resume
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="url"
-                      id="resume"
-                      name="resume"
-                      value={tempProfile?.resume || ''}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    />
-                  ) : (
-                    <div className={`px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                      {tempProfile?.resume ? (
-                        <a href={tempProfile.resume} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                          {tempProfile.resume}
-                        </a>
-                      ) : (
-                        'Tidak ada resume'
-                      )}
+                  {/* Submit Button - only shown when editing */}
+                  {isEditing && (
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setErrors({});
+                        }}
+                        className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'} text-white`}
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        className={`px-6 py-2 rounded-lg ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white`}
+                      >
+                        Simpan Perubahan
+                      </button>
                     </div>
                   )}
-                </div>
-
-                {/* Experience */}
-                <div className="mb-6">
-                  <label htmlFor="experience" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Pengalaman
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      id="experience"
-                      name="experience"
-                      value={tempProfile?.experience.join('\n') || ''}
-                      onChange={(e) => {
-                        const experience = e.target.value.split('\n').filter(exp => exp.trim() !== '');
-                        setTempProfile(prev => {
-                          if (prev) {
-                            return {
-                              ...prev,
-                              experience: experience
-                            };
-                          }
-                          return prev;
-                        });
-                      }}
-                      rows={3}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    />
-                  ) : (
-                    <div className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                      <ul className="list-disc pl-5">
-                        {profile.experience.map((exp, index) => (
-                          <li key={index}>{exp}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Education */}
-                <div className="mb-6">
-                  <label htmlFor="education" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Pendidikan
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      id="education"
-                      name="education"
-                      value={tempProfile?.education.join('\n') || ''}
-                      onChange={(e) => {
-                        const education = e.target.value.split('\n').filter(edu => edu.trim() !== '');
-                        setTempProfile(prev => {
-                          if (prev) {
-                            return {
-                              ...prev,
-                              education: education
-                            };
-                          }
-                          return prev;
-                        });
-                      }}
-                      rows={3}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    />
-                  ) : (
-                    <div className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}>
-                      <ul className="list-disc pl-5">
-                        {profile.education.map((edu, index) => (
-                          <li key={index}>{edu}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit Button - only shown when editing */}
-                {isEditing && (
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setErrors({});
-                      }}
-                      className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'} text-white`}
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      className={`px-6 py-2 rounded-lg ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white`}
-                    >
-                      Simpan Perubahan
-                    </button>
-                  </div>
-                )}
                 </form>
               ) : (
                 <div className="text-center py-10">

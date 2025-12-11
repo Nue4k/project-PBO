@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { getStudentProfile } from '../../lib/apiService';
 import { getStudentDocuments, uploadStudentDocument, deleteStudentDocument } from '../../services/internshipService';
 import Sidebar from '../../components/Sidebar';
@@ -20,7 +21,7 @@ type Document = {
 };
 
 const DocumentsPage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filter, setFilter] = useState<DocumentType | 'All'>('All');
@@ -34,25 +35,7 @@ const DocumentsPage = () => {
 
   const { token } = useAuth(); // Get the authentication token
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -242,9 +225,9 @@ const DocumentsPage = () => {
   const filteredDocuments = filter === 'All'
     ? documents
     : documents.filter(doc => {
-        const frontendType = convertBackendTypeToFrontend(doc.type);
-        return frontendType === filter;
-      });
+      const frontendType = convertBackendTypeToFrontend(doc.type);
+      return frontendType === filter;
+    });
 
 
   // Get icon based on document type
@@ -433,8 +416,8 @@ const DocumentsPage = () => {
             <div className="space-y-4">
               {filteredDocuments.length > 0 ? (
                 filteredDocuments.map(doc => (
-                  <div 
-                    key={doc.id} 
+                  <div
+                    key={doc.id}
                     className={`rounded-xl p-6 shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
                   >
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -452,7 +435,7 @@ const DocumentsPage = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2">
                         <button
                           onClick={async () => {

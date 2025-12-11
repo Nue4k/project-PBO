@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/authContext';
+import { useTheme } from '../lib/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { ApplicationService } from '../services/internship/InternshipService';
 import Sidebar from '../components/Sidebar';
@@ -9,7 +10,7 @@ import Sidebar from '../components/Sidebar';
 const StudentDashboardPage = () => {
   const { user, token } = useAuth(); // Get both user and token from auth context
   const router = useRouter();
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [studentProfile, setStudentProfile] = useState<any>(null);
 
@@ -41,25 +42,6 @@ const StudentDashboardPage = () => {
     }
   }, [user, router]);
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {

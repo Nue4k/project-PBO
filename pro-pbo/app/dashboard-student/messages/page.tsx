@@ -1,24 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { getStudentProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
 
 const MessagesPage = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+  const { darkMode } = useTheme();
 
   const [userName, setUserName] = useState<string>('User');
   const [userEmail, setUserEmail] = useState<string>('user@example.com');

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/authContext';
+import { useTheme } from '../../../lib/ThemeContext';
 import { getStudentProfile } from '../../../lib/apiService';
 import { useParams } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
@@ -53,7 +54,7 @@ type ApplicationFormData = {
 
 const ApplicationFormPage = () => {
   const params = useParams();
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // State untuk menyimpan informasi pengguna
@@ -97,25 +98,7 @@ const ApplicationFormPage = () => {
   const [selectedExistingDocs, setSelectedExistingDocs] = useState<string[]>([]); // IDs of selected existing docs
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -689,17 +672,17 @@ const ApplicationFormPage = () => {
                     <div
                       key={doc.id}
                       className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedExistingDocs.includes(doc.id)
-                          ? (darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50')
-                          : (darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50')
+                        ? (darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50')
+                        : (darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50')
                         }`}
                       onClick={() => toggleDocumentSelection(doc.id)}
                     >
                       <div className="flex items-center">
                         <div className={`mr-3 text-xl ${(doc.type || '').toUpperCase().includes('RESUME') ? 'text-blue-500' :
-                            (doc.type || '').toUpperCase().includes('COVER') ? 'text-green-500' :
-                              (doc.type || '').toUpperCase().includes('TRANSCRIPT') ? 'text-purple-500' :
-                                (doc.type || '').toUpperCase().includes('CERTIFIC') ? 'text-yellow-500' :
-                                  (doc.type || '').toUpperCase().includes('PORTFOLIO') ? 'text-indigo-500' : 'text-gray-500'
+                          (doc.type || '').toUpperCase().includes('COVER') ? 'text-green-500' :
+                            (doc.type || '').toUpperCase().includes('TRANSCRIPT') ? 'text-purple-500' :
+                              (doc.type || '').toUpperCase().includes('CERTIFIC') ? 'text-yellow-500' :
+                                (doc.type || '').toUpperCase().includes('PORTFOLIO') ? 'text-indigo-500' : 'text-gray-500'
                           }`}>
                           {(doc.type || '').toUpperCase().includes('RESUME') ? '📄' :
                             (doc.type || '').toUpperCase().includes('COVER') ? '✉️' :
@@ -717,8 +700,8 @@ const ApplicationFormPage = () => {
                                     'Other'}</p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedExistingDocs.includes(doc.id)
-                            ? (darkMode ? 'bg-blue-600 border-blue-600' : 'bg-blue-500 border-blue-500')
-                            : (darkMode ? 'border-gray-500' : 'border-gray-300')
+                          ? (darkMode ? 'bg-blue-600 border-blue-600' : 'bg-blue-500 border-blue-500')
+                          : (darkMode ? 'border-gray-500' : 'border-gray-300')
                           }`}>
                           {selectedExistingDocs.includes(doc.id) && (
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

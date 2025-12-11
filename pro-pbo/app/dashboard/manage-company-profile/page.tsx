@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext';
+import { useTheme } from '../../lib/ThemeContext';
 import { getCompanyProfile, updateCompanyProfile } from '../../lib/apiService';
 import Sidebar from '../../components/Sidebar';
 
@@ -21,7 +22,7 @@ type CompanyProfile = {
 };
 
 const ManageCompanyProfilePage = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profile, setProfile] = useState<CompanyProfile>({
     id: '',
@@ -43,25 +44,7 @@ const ManageCompanyProfilePage = () => {
 
   const { user, token, login } = useAuth(); // Dapatkan user, token, dan fungsi login dari context
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Toggle sidebar on mobile
   useEffect(() => {
@@ -100,7 +83,7 @@ const ManageCompanyProfilePage = () => {
     loadProfile();
   }, [token]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfile(prev => ({
       ...prev,
@@ -165,7 +148,7 @@ const ManageCompanyProfilePage = () => {
           }
 
           // Update the originalProfile to reflect the saved changes
-          setOriginalProfile({...profile});
+          setOriginalProfile({ ...profile });
 
           setIsEditing(false);
           setErrors({});
@@ -198,11 +181,10 @@ const ManageCompanyProfilePage = () => {
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
-          notification.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
           notification.type === 'error' ? 'bg-red-100 text-red-800 border border-red-300' :
-          'bg-blue-100 text-blue-800 border border-blue-300'
-        }`}>
+            'bg-blue-100 text-blue-800 border border-blue-300'
+          }`}>
           <div className="flex justify-between items-center">
             <span>{notification.message}</span>
             <button onClick={handleNotificationClose} className="ml-4 text-xl">&times;</button>
@@ -293,9 +275,8 @@ const ManageCompanyProfilePage = () => {
                       setIsEditing(false);
                       setErrors({});
                     }}
-                    className={`px-4 py-2 rounded-lg ${
-                      darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'
-                    } text-white`}
+                    className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'
+                      } text-white`}
                   >
                     Batal
                   </button>
@@ -303,9 +284,8 @@ const ManageCompanyProfilePage = () => {
                 <button
                   type="button"
                   onClick={() => setIsEditing(!isEditing)}
-                  className={`px-4 py-2 rounded-lg ${
-                    darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
-                  } text-white`}
+                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
+                    } text-white`}
                 >
                   {isEditing ? 'Lihat Profil' : 'Edit Profil'}
                 </button>
@@ -318,9 +298,8 @@ const ManageCompanyProfilePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Company Logo */}
                   <div className="md:col-span-2 flex flex-col items-center">
-                    <div className={`w-32 h-32 rounded-full ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                    } flex items-center justify-center mb-4`}>
+                    <div className={`w-32 h-32 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                      } flex items-center justify-center mb-4`}>
                       {profile.logo ? (
                         <img src={profile.logo} alt="Company Logo" className="w-full h-full object-contain rounded-full" />
                       ) : (
@@ -328,9 +307,8 @@ const ManageCompanyProfilePage = () => {
                       )}
                     </div>
                     {isEditing && (
-                      <label className={`px-4 py-2 rounded-lg cursor-pointer ${
-                        darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
-                      } text-white`}>
+                      <label className={`px-4 py-2 rounded-lg cursor-pointer ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white`}>
                         Ganti Logo
                         <input
                           type="file"
@@ -356,9 +334,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Company Name */}
                   <div>
-                    <label htmlFor="name" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="name" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Nama Perusahaan
                     </label>
                     {isEditing ? (
@@ -369,22 +346,19 @@ const ManageCompanyProfilePage = () => {
                           name="name"
                           value={profile.name}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.name ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.name ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
                         {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.name}
                       </div>
                     )}
@@ -392,9 +366,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Industry */}
                   <div>
-                    <label htmlFor="industry" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="industry" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Bidang Industri
                     </label>
                     {isEditing ? (
@@ -404,13 +377,11 @@ const ManageCompanyProfilePage = () => {
                           name="industry"
                           value={profile.industry}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.industry ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.industry ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         >
                           <option value="">Pilih bidang industri</option>
                           <option value="Teknologi Informasi">Teknologi Informasi</option>
@@ -425,11 +396,10 @@ const ManageCompanyProfilePage = () => {
                         {errors.industry && <p className="mt-1 text-sm text-red-500">{errors.industry}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.industry || 'Belum dipilih'}
                       </div>
                     )}
@@ -437,9 +407,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Location */}
                   <div>
-                    <label htmlFor="location" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="location" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Alamat Kantor
                     </label>
                     {isEditing ? (
@@ -450,22 +419,19 @@ const ManageCompanyProfilePage = () => {
                           name="location"
                           value={profile.location}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.location ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.location ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
                         {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.location || 'Tidak disediakan'}
                       </div>
                     )}
@@ -473,9 +439,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Contact Email */}
                   <div>
-                    <label htmlFor="contactEmail" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="contactEmail" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Email Kontak
                     </label>
                     {isEditing ? (
@@ -486,22 +451,19 @@ const ManageCompanyProfilePage = () => {
                           name="contactEmail"
                           value={profile.contactEmail}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.contactEmail ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.contactEmail ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
                         {errors.contactEmail && <p className="mt-1 text-sm text-red-500">{errors.contactEmail}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.contactEmail}
                       </div>
                     )}
@@ -509,9 +471,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Contact Phone */}
                   <div>
-                    <label htmlFor="contactPhone" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="contactPhone" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Telepon Kontak
                     </label>
                     {isEditing ? (
@@ -522,22 +483,19 @@ const ManageCompanyProfilePage = () => {
                           name="contactPhone"
                           value={profile.contactPhone}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.contactPhone ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.contactPhone ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
                         {errors.contactPhone && <p className="mt-1 text-sm text-red-500">{errors.contactPhone}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.contactPhone || 'Tidak disediakan'}
                       </div>
                     )}
@@ -545,9 +503,8 @@ const ManageCompanyProfilePage = () => {
 
                   {/* Website */}
                   <div>
-                    <label htmlFor="website" className={`block text-sm font-medium mb-2 ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label htmlFor="website" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                       Website
                     </label>
                     {isEditing ? (
@@ -558,22 +515,19 @@ const ManageCompanyProfilePage = () => {
                           name="website"
                           value={profile.website}
                           onChange={handleInputChange}
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors.website ? 'border-red-500' : ''
-                          } ${
-                            darkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
+                          className={`w-full px-3 py-2 rounded-lg border ${errors.website ? 'border-red-500' : ''
+                            } ${darkMode
+                              ? 'bg-gray-700 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         />
                         {errors.website && <p className="mt-1 text-sm text-red-500">{errors.website}</p>}
                       </>
                     ) : (
-                      <div className={`px-3 py-2 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                        }`}>
                         {profile.website ? (
                           <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
                             {profile.website}
@@ -588,9 +542,8 @@ const ManageCompanyProfilePage = () => {
 
                 {/* Company Description */}
                 <div className="mb-6">
-                  <label htmlFor="description" className={`block text-sm font-medium mb-2 ${
-                    darkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
+                  <label htmlFor="description" className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                     Deskripsi Perusahaan
                   </label>
                   {isEditing ? (
@@ -601,22 +554,19 @@ const ManageCompanyProfilePage = () => {
                         value={profile.description}
                         onChange={handleInputChange}
                         rows={4}
-                        className={`w-full px-3 py-2 rounded-lg border ${
-                          errors.description ? 'border-red-500' : ''
-                        } ${
-                          darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white' 
+                        className={`w-full px-3 py-2 rounded-lg border ${errors.description ? 'border-red-500' : ''
+                          } ${darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white'
                             : 'bg-white border-gray-300 text-gray-900'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                       />
                       {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
                     </>
                   ) : (
-                    <div className={`w-full px-3 py-2 rounded-lg border ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-gray-50 border-gray-300 text-gray-900'
-                    }`}>
+                    <div className={`w-full px-3 py-2 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                      }`}>
                       {profile.description}
                     </div>
                   )}
@@ -631,17 +581,15 @@ const ManageCompanyProfilePage = () => {
                         setIsEditing(false);
                         setErrors({});
                       }}
-                      className={`px-4 py-2 rounded-lg ${
-                        darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'
-                      } text-white`}
+                      className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-300 hover:bg-gray-400'
+                        } text-white`}
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className={`px-6 py-2 rounded-lg ${
-                        darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'
-                      } text-white`}
+                      className={`px-6 py-2 rounded-lg ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'
+                        } text-white`}
                     >
                       Simpan Perubahan
                     </button>

@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/authContext'; // Impor useAuth untuk info user
+import { useTheme } from '../../lib/ThemeContext';
 import { getCompanyInternships, closeInternship, updateInternship } from '../../services/internshipService'; // Import the necessary functions
 import ProtectedRoute from '../../components/auth/ProtectedRoute'; // Impor komponen proteksi
 import Sidebar from '../../components/Sidebar'; // Import sidebar component
@@ -22,13 +23,14 @@ interface Internship {
   is_active: boolean;
   salary?: string;
   isPaid: boolean;
+  isMock?: boolean;
 }
 
 const ManageInternshipsPage = () => {
   const { user, token } = useAuth(); // Dapatkan data user dan token dari context
   const [internships, setInternships] = useState<Internship[]>([]);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [companyProfile, setCompanyProfile] = useState<any>(null);
 
@@ -78,12 +80,7 @@ const ManageInternshipsPage = () => {
     }
   });
 
-  useEffect(() => {
-    // Check system preference for dark mode
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
+
 
   // Detect screen size and set mobile state
   useEffect(() => {
@@ -103,18 +100,7 @@ const ManageInternshipsPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    // Update the class on the document element
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
 
   // Initialize sidebar open state based on screen size
   useEffect(() => {
@@ -154,7 +140,7 @@ const ManageInternshipsPage = () => {
       // Prevent multiple simultaneous requests
       if (token && isMounted && !isFetching) {
         isFetching = true; // Set flag to prevent another fetch
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: NodeJS.Timeout | null = null;
         try {
           console.log('Fetching company internships with token:', token); // Debug log
           setLoading(true);
@@ -179,7 +165,7 @@ const ManageInternshipsPage = () => {
           if (isMounted && data && data.length === 0) {
             console.log('No internships found');
             setInternships([]);
-          } else if (isMounted) {
+          } else if (isMounted && data) {
             // Process real data
             const processedData = data.map(internship => {
               console.log('Processing real internship:', {
@@ -604,7 +590,7 @@ const ManageInternshipsPage = () => {
                         const fetchInternships = async () => {
                           // Don't fetch if loading to avoid multiple requests
                           if (token && !loading) {
-                            let timeoutId: NodeJS.Timeout;
+                            let timeoutId: NodeJS.Timeout | null = null;
                             try {
                               console.log('Refreshing company internships...'); // Debug log
                               setLoading(true);
@@ -623,7 +609,7 @@ const ManageInternshipsPage = () => {
 
                               console.log('Refreshed company internships:', data); // Debug log
                               // Process real data
-                              const processedData = data.map(internship => {
+                              const processedData = (data || []).map(internship => {
                                 console.log('Refreshing internship:', {
                                   id: internship.id,
                                   title: internship.title,
@@ -668,13 +654,12 @@ const ManageInternshipsPage = () => {
                         fetchInternships();
                       }}
                       disabled={loading}
-                      className={`flex items-center px-3 py-1.5 text-sm rounded ${
-                        loading
-                          ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                          : darkMode
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      } transition-colors`}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded ${loading
+                        ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                        : darkMode
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        } transition-colors`}
                     >
                       {loading ? (
                         <>
@@ -728,18 +713,17 @@ const ManageInternshipsPage = () => {
                             <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">{internship.location}</td>
                             <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">
                               {internship.type === 'wfo' ? 'WFO' :
-                               internship.type === 'wfh' ? 'WFH' :
-                               'Hybrid'}
+                                internship.type === 'wfh' ? 'WFH' :
+                                  'Hybrid'}
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300">
                               {internship.requirements?.duration || '-'} bulan
                             </td>
                             <td className="py-3 px-4 text-sm">
-                              <span className={`px-1.5 py-0.5 rounded text-xs ${
-                                internship.isPaid
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              }`}>
+                              <span className={`px-1.5 py-0.5 rounded text-xs ${internship.isPaid
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                }`}>
                                 {internship.isPaid ? 'Berbayar' : 'Tidak'}
                               </span>
                             </td>
@@ -748,11 +732,10 @@ const ManageInternshipsPage = () => {
                             </td>
                             <td className="py-3 px-4 text-sm">
                               <span
-                                className={`px-2 py-1 rounded-full text-xs ${
-                                  internship.status === 'Active' || internship.is_active
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                }`}
+                                className={`px-2 py-1 rounded-full text-xs ${internship.status === 'Active' || internship.is_active
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                  }`}
                               >
                                 {internship.status}
                               </span>
@@ -762,21 +745,19 @@ const ManageInternshipsPage = () => {
                               <div className="flex space-x-2">
                                 <button
                                   onClick={() => handleEditInternship(internship)}
-                                  className={`px-3 py-1 rounded text-xs ${
-                                    (internship.status === 'Active' || internship.is_active)
-                                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white'  // Kuning untuk aktif
-                                      : 'bg-gray-300 text-gray-700 cursor-not-allowed'  // Abu2 untuk tidak aktif
-                                  }`}
+                                  className={`px-3 py-1 rounded text-xs ${(internship.status === 'Active' || internship.is_active)
+                                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white'  // Kuning untuk aktif
+                                    : 'bg-gray-300 text-gray-700 cursor-not-allowed'  // Abu2 untuk tidak aktif
+                                    }`}
                                   disabled={!(internship.status === 'Active' || internship.is_active)}
                                 >
                                   Edit
                                 </button>
                                 <button
-                                  className={`px-3 py-1 rounded text-xs ${
-                                    (internship.status === 'Active' || internship.is_active)
-                                      ? 'bg-red-500 hover:bg-red-600 text-white'  // Merah untuk aktif
-                                      : 'bg-gray-300 text-gray-700 cursor-not-allowed'  // Abu2 untuk tidak aktif
-                                  }`}
+                                  className={`px-3 py-1 rounded text-xs ${(internship.status === 'Active' || internship.is_active)
+                                    ? 'bg-red-500 hover:bg-red-600 text-white'  // Merah untuk aktif
+                                    : 'bg-gray-300 text-gray-700 cursor-not-allowed'  // Abu2 untuk tidak aktif
+                                    }`}
                                   onClick={() => handleCloseJob(internship.id)}
                                   disabled={!(internship.status === 'Active' || internship.is_active)}
                                 >
@@ -784,11 +765,10 @@ const ManageInternshipsPage = () => {
                                 </button>
                                 <button
                                   onClick={() => handleViewInternship(internship)}
-                                  className={`px-3 py-1 rounded text-xs ${
-                                    internship.isMock
-                                      ? 'bg-gray-400 hover:bg-gray-500 text-white'
-                                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                                  }`}
+                                  className={`px-3 py-1 rounded text-xs ${internship.isMock
+                                    ? 'bg-gray-400 hover:bg-gray-500 text-white'
+                                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    }`}
                                 >
                                   Lihat
                                 </button>
@@ -877,8 +857,8 @@ const ManageInternshipsPage = () => {
                   <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tipe</h3>
                   <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {selectedInternship.type === 'wfo' ? 'WFO (Work From Office)' :
-                     selectedInternship.type === 'wfh' ? 'WFH (Work From Home)' :
-                     'Hybrid'}
+                      selectedInternship.type === 'wfh' ? 'WFH (Work From Home)' :
+                        'Hybrid'}
                   </p>
                 </div>
                 <div>
@@ -930,7 +910,7 @@ const ManageInternshipsPage = () => {
                 <div>
                   <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Jurusan yang Dicari</h3>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {(selectedInternship.requirements?.majors || []).map((major, index) => (
+                    {(selectedInternship.requirements?.majors || []).map((major: string, index: number) => (
                       <span
                         key={index}
                         className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
@@ -949,7 +929,7 @@ const ManageInternshipsPage = () => {
                 <div>
                   <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Keterampilan yang Dicari</h3>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {(selectedInternship.requirements?.skills || []).map((skill, index) => (
+                    {(selectedInternship.requirements?.skills || []).map((skill: string, index: number) => (
                       <span
                         key={index}
                         className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
@@ -1015,11 +995,10 @@ const ManageInternshipsPage = () => {
                     value={editFormData.title}
                     onChange={handleInputChange}
                     required
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                     placeholder="Contoh: Program Magang Pemasaran Digital"
                   />
                 </div>
@@ -1034,11 +1013,10 @@ const ManageInternshipsPage = () => {
                     value={editFormData.jobType}
                     onChange={handleInputChange}
                     required
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                   >
                     <option value="wfo">WFO (Work From Office)</option>
                     <option value="wfh">WFH (Work From Home)</option>
@@ -1055,11 +1033,10 @@ const ManageInternshipsPage = () => {
                     name="location"
                     value={editFormData.location}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                   >
                     <option value="">Pilih Lokasi</option>
                     <option value="Jakarta">Jakarta</option>
@@ -1086,11 +1063,10 @@ const ManageInternshipsPage = () => {
                     value={editFormData.closingDate}
                     onChange={handleInputChange}
                     required
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                   />
                 </div>
 
@@ -1106,11 +1082,10 @@ const ManageInternshipsPage = () => {
                     onChange={handleInputChange}
                     required
                     min="1"
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                     placeholder="Contoh: 3, 6"
                   />
                 </div>
@@ -1121,33 +1096,31 @@ const ManageInternshipsPage = () => {
                   </label>
                   <div className="flex space-x-4">
                     <label
-                      className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
-                        !editFormData.isPaid
-                          ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
-                          : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
-                      }`}
+                      className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${!editFormData.isPaid
+                        ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
+                        : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
+                        }`}
                     >
                       <input
                         type="radio"
                         name="isPaid"
                         checked={!editFormData.isPaid}
-                        onChange={() => setEditFormData(prev => ({...prev, isPaid: false}))}
+                        onChange={() => setEditFormData(prev => ({ ...prev, isPaid: false }))}
                         className="hidden"
                       />
                       <span className="mx-auto font-medium">Unpaid</span>
                     </label>
                     <label
-                      className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${
-                        editFormData.isPaid
-                          ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
-                          : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
-                      }`}
+                      className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-colors w-full text-center ${editFormData.isPaid
+                        ? (darkMode ? 'border-[#f59e0b] bg-[#f59e0b]/10 text-[#f59e0b]' : 'border-[#f59e0b] bg-[#fef3c7] text-[#f59e0b]')
+                        : (darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-white text-gray-700')
+                        }`}
                     >
                       <input
                         type="radio"
                         name="isPaid"
                         checked={editFormData.isPaid}
-                        onChange={() => setEditFormData(prev => ({...prev, isPaid: true}))}
+                        onChange={() => setEditFormData(prev => ({ ...prev, isPaid: true }))}
                         className="hidden"
                       />
                       <span className="mx-auto font-medium">Paid</span>
@@ -1167,11 +1140,10 @@ const ManageInternshipsPage = () => {
                   onChange={handleInputChange}
                   required
                   rows={5}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    darkMode
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                  }`}
+                  className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                    }`}
                   placeholder="Jelaskan tentang program magang, tanggung jawab utama, dan pengalaman yang akan didapatkan oleh peserta magang..."
                 ></textarea>
               </div>
@@ -1190,11 +1162,10 @@ const ManageInternshipsPage = () => {
                       value={editFormData.salary}
                       onChange={handleInputChange}
                       required={editFormData.isPaid}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        darkMode
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                      className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                        }`}
                       placeholder="Contoh: 1.500.000 IDR per bulan"
                     />
                     <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -1216,11 +1187,10 @@ const ManageInternshipsPage = () => {
                   </label>
                   <select
                     id="majorInput"
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                     value=""
                     onChange={(e) => {
                       if (e.target.value && !editFormData.requirements.majors.includes(e.target.value)) {
@@ -1246,12 +1216,11 @@ const ManageInternshipsPage = () => {
                   </select>
 
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {editFormData.requirements.majors.map((major, index) => (
+                    {editFormData.requirements.majors.map((major: string, index: number) => (
                       <div
                         key={index}
-                        className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                          darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                        }`}
+                        className={`flex items-center px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                          }`}
                       >
                         {major}
                         <button
@@ -1275,11 +1244,10 @@ const ManageInternshipsPage = () => {
                     <input
                       type="text"
                       id="skillInput"
-                      className={`flex-1 px-4 py-3 rounded-l-lg border ${
-                        darkMode
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                      }`}
+                      className={`flex-1 px-4 py-3 rounded-l-lg border ${darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                        }`}
                       placeholder="Tambahkan keterampilan (misal: JavaScript, Desain Grafis)"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
@@ -1305,12 +1273,11 @@ const ManageInternshipsPage = () => {
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {editFormData.requirements.skills.map((skill, index) => (
+                    {editFormData.requirements.skills.map((skill: string, index: number) => (
                       <div
                         key={index}
-                        className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                          darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                        }`}
+                        className={`flex items-center px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                          }`}
                       >
                         {skill}
                         <button
@@ -1340,11 +1307,10 @@ const ManageInternshipsPage = () => {
                         minSemester: e.target.value
                       }
                     }))}
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                        : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border ${darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      : 'bg-white border-gray-300 text-gray-900 focus:ring-[#f59e0b] focus:border-[#f59e0b]'
+                      }`}
                   >
                     <option value="">Pilih Minimal Semester</option>
                     <option value="1">Semester 1</option>
@@ -1363,11 +1329,10 @@ const ManageInternshipsPage = () => {
                 <button
                   type="button"
                   onClick={closeEditModal}
-                  className={`px-6 py-3 rounded-lg font-medium ${
-                    darkMode
-                      ? 'bg-gray-700 text-white hover:bg-gray-600'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`px-6 py-3 rounded-lg font-medium ${darkMode
+                    ? 'bg-gray-700 text-white hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                 >
                   Batal
                 </button>
